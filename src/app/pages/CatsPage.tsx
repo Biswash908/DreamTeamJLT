@@ -1,12 +1,14 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router';
 import { Header } from '../components/Header';
 import { useDarkMode } from '../context/DarkModeContext';
-import { cats, homedCats } from '../data/cats';
+import { fetchCats, Cat } from '../data/cats';
 import { ChevronDown, ChevronUp, Filter, Scissors } from 'lucide-react';
 
 export function CatsPage() {
   const { isDarkMode } = useDarkMode();
+  const [allCats, setAllCats] = useState<Cat[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [showStray, setShowStray] = useState(true);
   const [showHomed, setShowHomed] = useState(true);
@@ -15,7 +17,21 @@ export function CatsPage() {
   const [filterAdoptable, setFilterAdoptable] = useState(false);
   const [filterGender, setFilterGender] = useState<'All' | 'Male' | 'Female'>('All');
 
-  const allCats = [...cats, ...homedCats];
+  // Load from Supabase on mount
+  useEffect(() => {
+    const loadCats = async () => {
+      try {
+        const data = await fetchCats();
+        setAllCats(data);
+      } catch (error) {
+        console.error('Failed to load cats:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadCats();
+  }, []);
   
   const filteredCats = allCats.filter(cat => {
     const matchesSearch = cat.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -72,8 +88,15 @@ export function CatsPage() {
           </button>
         </div>
 
+        {/* Loading State */}
+        {loading && (
+          <div className={`text-center py-8 ${isDarkMode ? 'text-[#b5c0c8]' : 'text-[#636e72]'}`}>
+            <p className="font-['Fredoka'] text-[18px]">Loading cats...</p>
+          </div>
+        )}
+
         {/* Filter Panel */}
-        {showFilters && (
+        {!loading && showFilters && (
           <div className={`mb-8 p-6 rounded-[24px] ${isDarkMode ? 'bg-[#1a2028] border border-[rgba(255,255,255,0.1)]' : 'bg-white border border-[rgba(0,0,0,0.1)]'} shadow-lg max-w-[400px]`}>
             <h3 className={`font-['Fredoka'] font-semibold text-[18px] mb-4 ${isDarkMode ? 'text-[#f4f7f9]' : 'text-[#2d3436]'}`} style={{ fontVariationSettings: "'wdth' 100" }}>Filters</h3>
             
@@ -132,7 +155,7 @@ export function CatsPage() {
             </h2>
           </button>
 
-          {showStray && (
+          {!loading && showStray && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {strayCats.map((cat) => (
                 <Link key={cat.id} to={`/cat/${cat.id}`} className="no-underline group">

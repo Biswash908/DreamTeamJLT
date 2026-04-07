@@ -50,6 +50,13 @@ export function Header() {
                   </div>
                 </div>
               </Link>
+              <Link to="/admin" className="no-underline">
+                <div className={`content-stretch flex items-center justify-center px-[24px] py-[10px] relative rounded-[24px] shrink-0 max-sm:px-[16px] transition-colors ${isActive('/admin') ? (isDarkMode ? 'bg-[rgba(78,205,196,0.2)]' : 'bg-[rgba(78,205,196,0.1)]') : (isDarkMode ? 'hover:bg-[rgba(255,255,255,0.05)]' : 'hover:bg-[rgba(0,0,0,0.05)]')}`} data-name="Component 3">
+                  <div className={`flex flex-col font-['Fredoka:Medium',sans-serif] font-medium justify-center leading-[0] relative shrink-0 text-[14px] text-center whitespace-nowrap ${isActive('/admin') ? 'text-[#4ecdc4]' : (isDarkMode ? 'text-[#b5c0c8]' : 'text-[#636e72]')}`} style={{ fontVariationSettings: "'wdth' 100" }}>
+                    <p className="leading-[24.5px]">Admin</p>
+                  </div>
+                </div>
+              </Link>
               <button
                 onClick={toggleDarkMode}
                 className={`content-stretch flex flex-col items-start pl-[4px] relative shrink-0 bg-transparent border-none cursor-pointer ${isDarkMode ? 'hover:bg-[rgba(255,255,255,0.05)]' : 'hover:bg-[rgba(0,0,0,0.05)]'} rounded-[20px] transition-colors`}

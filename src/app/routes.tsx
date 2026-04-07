@@ -3,6 +3,7 @@ import { HomePage } from './pages/HomePage';
 import { CatsPage } from './pages/CatsPage';
 import { CatProfilePage } from './pages/CatProfilePage';
 import { DonatePage } from './pages/DonatePage';
+import { AdminPage } from './pages/AdminPage';
 
 export const router = createBrowserRouter([
   {
@@ -20,6 +21,10 @@ export const router = createBrowserRouter([
   {
     path: '/donate',
     Component: DonatePage,
+  },
+  {
+    path: '/admin',
+    Component: AdminPage,
   },
   {
     path: '*',

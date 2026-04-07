@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router';
 import { Header } from '../components/Header';
-import { cats, homedCats } from '../data/cats';
+import { fetchCats, fetchCatById, Cat } from '../data/cats';
 import { useDarkMode } from '../context/DarkModeContext';
 import { ChevronLeft, ChevronRight, MapPin, Check } from 'lucide-react';
 
@@ -10,19 +10,52 @@ export function CatProfilePage() {
   const navigate = useNavigate();
   const { isDarkMode } = useDarkMode();
   const [showFullDescription, setShowFullDescription] = useState(false);
+  const [allCats, setAllCats] = useState<Cat[]>([]);
+  const [currentCat, setCurrentCat] = useState<Cat | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const allCats = [...cats, ...homedCats];
-  const currentCat = allCats.find(c => c.id === id);
+  // Load from Supabase on mount
+  useEffect(() => {
+    const loadCat = async () => {
+      try {
+        const data = await fetchCats();
+        setAllCats(data);
+        
+        if (id) {
+          const cat = await fetchCatById(id);
+          setCurrentCat(cat);
+        }
+      } catch (error) {
+        console.error('Failed to load cat:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadCat();
+  }, [id]);
   const currentIndex = allCats.findIndex(c => c.id === id);
   
   const prevCat = currentIndex > 0 ? allCats[currentIndex - 1] : null;
   const nextCat = currentIndex < allCats.length - 1 ? allCats[currentIndex + 1] : null;
 
+  if (loading) {
+    return (
+      <div className={`content-stretch flex flex-col items-center justify-center size-full ${isDarkMode ? 'bg-[#10141a]' : 'bg-[#fff9f5]'}`}>
+        <Header />
+        <div className={`text-center ${isDarkMode ? 'text-[#b5c0c8]' : 'text-[#2d3436]'}`}>
+          <div className="font-['Fredoka:Bold',sans-serif] text-[32px] mb-[16px]">Loading...</div>
+        </div>
+      </div>
+    );
+  }
+
   if (!currentCat) {
     return (
-      <div className="content-stretch flex flex-col items-center justify-center size-full">
+      <div className={`content-stretch flex flex-col items-center justify-center size-full ${isDarkMode ? 'bg-[#10141a]' : 'bg-[#fff9f5]'}`}>
+        <Header />
         <div className="text-center">
-          <div className="font-['Fredoka:Bold',sans-serif] text-[32px] text-[#2d3436] mb-[16px]">Cat Not Found</div>
+          <div className={`font-['Fredoka:Bold',sans-serif] text-[32px] mb-[16px] ${isDarkMode ? 'text-[#f4f7f9]' : 'text-[#2d3436]'}`}>Cat Not Found</div>
           <Link to="/cats" className="text-[#ff6b6b] font-['Nunito:SemiBold',sans-serif] underline">
             Back to All Cats
           </Link>
