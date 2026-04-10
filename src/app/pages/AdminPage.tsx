@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Header } from '../components/Header';
 import { useDarkMode } from '../context/DarkModeContext';
 import { Cat, cats as initialCats, homedCats as initialHomedCats } from '../data/cats';
-import { Plus, Edit2, Trash2, Save, X } from 'lucide-react';
+import { Plus, Edit2, Trash2, Save, X, DollarSign, Heart } from 'lucide-react';
 
 export function AdminPage() {
   const { isDarkMode } = useDarkMode();
@@ -10,12 +10,18 @@ export function AdminPage() {
   const [editingCat, setEditingCat] = useState<Cat | null>(null);
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [adoptionInterests, setAdoptionInterests] = useState<Record<string, any>>({});
 
   // Load from localStorage on mount
   useEffect(() => {
     const stored = localStorage.getItem('dreamTeamCats');
     if (stored) {
       setAllCats(JSON.parse(stored));
+    }
+
+    const interests = localStorage.getItem('adoption-interests');
+    if (interests) {
+      setAdoptionInterests(JSON.parse(interests));
     }
   }, []);
 
@@ -239,11 +245,78 @@ export function AdminPage() {
                   />
                 </div>
 
+                {/* Free for Adoption Checkbox */}
+                <div className={`border-t pt-4 ${isDarkMode ? 'border-[rgba(255,255,255,0.1)]' : 'border-[rgba(0,0,0,0.1)]'}`}>
+                  <label className="flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={editingCat.freeForAdoption || false}
+                      onChange={(e) => setEditingCat({ ...editingCat, freeForAdoption: e.target.checked, adoptionCluster: e.target.checked ? editingCat.adoptionCluster : '', adoptionEmail: e.target.checked ? editingCat.adoptionEmail : '' })}
+                      className="w-5 h-5 rounded border-2 border-[#4ecdc4] text-[#4ecdc4] focus:ring-2 focus:ring-[#4ecdc4] focus:ring-offset-0 cursor-pointer"
+                    />
+                    <span className={`ml-3 font-['Nunito'] text-[16px] font-semibold ${isDarkMode ? 'text-[#f4f7f9]' : 'text-[#2d3436]'}`}>Free for Adoption</span>
+                  </label>
+                </div>
+
+                {/* Adoption Cluster & Email - Only show if checked */}
+                {editingCat.freeForAdoption && (
+                  <div className="space-y-4 pt-4">
+                    <div>
+                      <label className={`block font-['Nunito'] font-semibold text-[14px] mb-2 ${isDarkMode ? 'text-[#f4f7f9]' : 'text-[#2d3436]'}`}>Cluster Location *</label>
+                      <select
+                        value={editingCat.adoptionCluster || ''}
+                        onChange={(e) => setEditingCat({ ...editingCat, adoptionCluster: e.target.value })}
+                        className={`w-full px-4 py-2.5 rounded-[12px] border font-['Nunito'] text-[16px] ${isDarkMode ? 'bg-[#10141a] border-[rgba(255,255,255,0.23)] text-[#f4f7f9]' : 'bg-white border-[rgba(0,0,0,0.23)] text-[#2d3436]'} focus:outline-none focus:border-[#4ecdc4] cursor-pointer`}
+                      >
+                        <option value="">Select a cluster...</option>
+                        <option value="Cluster A">Cluster A</option>
+                        <option value="Cluster B">Cluster B</option>
+                        <option value="Cluster C">Cluster C</option>
+                        <option value="Cluster D">Cluster D</option>
+                        <option value="Cluster E">Cluster E</option>
+                        <option value="Cluster F">Cluster F</option>
+                        <option value="Cluster G">Cluster G</option>
+                        <option value="Cluster H">Cluster H</option>
+                        <option value="Cluster I">Cluster I</option>
+                        <option value="Cluster J">Cluster J</option>
+                        <option value="Cluster K">Cluster K</option>
+                        <option value="Cluster L">Cluster L</option>
+                        <option value="Cluster M">Cluster M</option>
+                        <option value="Cluster N">Cluster N</option>
+                        <option value="Cluster O">Cluster O</option>
+                        <option value="Cluster P">Cluster P</option>
+                        <option value="Cluster Q">Cluster Q</option>
+                        <option value="Cluster R">Cluster R</option>
+                        <option value="Cluster S">Cluster S</option>
+                        <option value="Cluster T">Cluster T</option>
+                        <option value="Cluster U">Cluster U</option>
+                        <option value="Cluster V">Cluster V</option>
+                        <option value="Cluster W">Cluster W</option>
+                        <option value="Cluster X">Cluster X</option>
+                        <option value="Cluster Y">Cluster Y</option>
+                        <option value="Cluster Z">Cluster Z</option>
+                        <option value="Cluster Central Park">Cluster Central Park</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className={`block font-['Nunito'] font-semibold text-[14px] mb-2 ${isDarkMode ? 'text-[#f4f7f9]' : 'text-[#2d3436]'}`}>Cluster Email *</label>
+                      <input
+                        type="email"
+                        value={editingCat.adoptionEmail || ''}
+                        onChange={(e) => setEditingCat({ ...editingCat, adoptionEmail: e.target.value })}
+                        className={`w-full px-4 py-2.5 rounded-[12px] border font-['Nunito'] text-[16px] ${isDarkMode ? 'bg-[#10141a] border-[rgba(255,255,255,0.23)] text-[#f4f7f9]' : 'bg-white border-[rgba(0,0,0,0.23)] text-[#2d3436]'} focus:outline-none focus:border-[#4ecdc4]`}
+                        placeholder="e.g., cluster@dreamteam.com"
+                      />
+                    </div>
+                  </div>
+                )}
+
                 {/* Action Buttons */}
                 <div className="flex gap-3 pt-4">
                   <button
                     onClick={handleSave}
-                    disabled={!editingCat.name || !editingCat.breed || !editingCat.image || !editingCat.description || !editingCat.location}
+                    disabled={!editingCat.name || !editingCat.breed || !editingCat.image || !editingCat.description || !editingCat.location || (editingCat.freeForAdoption && (!editingCat.adoptionCluster || !editingCat.adoptionEmail))}
                     className="flex-1 bg-[#4ecdc4] hover:bg-[#3db8b0] disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded-[16px] px-6 py-3 flex items-center justify-center gap-2 font-['Fredoka'] font-medium text-[16px] transition-colors shadow-lg"
                     style={{ fontVariationSettings: "'wdth' 100" }}
                   >
@@ -276,6 +349,8 @@ export function AdminPage() {
                   <th className={`px-6 py-4 text-left font-['Fredoka'] font-medium text-[14px] ${isDarkMode ? 'text-[#b5c0c8]' : 'text-[#636e72]'}`} style={{ fontVariationSettings: "'wdth' 100" }}>Gender</th>
                   <th className={`px-6 py-4 text-left font-['Fredoka'] font-medium text-[14px] ${isDarkMode ? 'text-[#b5c0c8]' : 'text-[#636e72]'}`} style={{ fontVariationSettings: "'wdth' 100" }}>Status</th>
                   <th className={`px-6 py-4 text-left font-['Fredoka'] font-medium text-[14px] ${isDarkMode ? 'text-[#b5c0c8]' : 'text-[#636e72]'}`} style={{ fontVariationSettings: "'wdth' 100" }}>TNR</th>
+                  <th className={`px-6 py-4 text-center font-['Fredoka'] font-medium text-[14px] ${isDarkMode ? 'text-[#b5c0c8]' : 'text-[#636e72]'}`} style={{ fontVariationSettings: "'wdth' 100" }}>Interests</th>
+                  <th className={`px-6 py-4 text-center font-['Fredoka'] font-medium text-[14px] ${isDarkMode ? 'text-[#b5c0c8]' : 'text-[#636e72]'}`} style={{ fontVariationSettings: "'wdth' 100" }}>Free for Adoption</th>
                   <th className={`px-6 py-4 text-left font-['Fredoka'] font-medium text-[14px] ${isDarkMode ? 'text-[#b5c0c8]' : 'text-[#636e72]'}`} style={{ fontVariationSettings: "'wdth' 100" }}>Location</th>
                   <th className={`px-6 py-4 text-center font-['Fredoka'] font-medium text-[14px] ${isDarkMode ? 'text-[#b5c0c8]' : 'text-[#636e72]'}`} style={{ fontVariationSettings: "'wdth' 100" }}>Actions</th>
                 </tr>
@@ -311,6 +386,35 @@ export function AdminPage() {
                       <span className={`inline-block px-3 py-1 rounded-full text-[12px] font-['Nunito'] font-semibold ${cat.tnr ? 'bg-[#2e7d32]/20 text-[#2e7d32]' : 'bg-gray-400/20 text-gray-500'}`}>
                         {cat.tnr ? 'Yes' : 'No'}
                       </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      {adoptionInterests[cat.id] ? (
+                        <div className="flex items-center justify-center gap-2">
+                          <Heart className="w-4 h-4 text-[#ff6b6b]" fill="#ff6b6b" />
+                          <span className={`font-['Fredoka'] font-semibold text-[14px] text-[#ff6b6b]`} style={{ fontVariationSettings: "'wdth' 100" }}>
+                            Interested
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-center">
+                          <span className={`font-['Nunito'] text-[14px] ${isDarkMode ? 'text-[#636e72]' : 'text-[#b5c0c8]'}`}>
+                            None
+                          </span>
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center justify-center">
+                        {cat.freeForAdoption ? (
+                          <span className="inline-block px-3 py-1 rounded-full text-[12px] font-['Nunito'] font-semibold bg-[#4ecdc4]/20 text-[#4ecdc4]">
+                            Yes
+                          </span>
+                        ) : (
+                          <span className={`inline-block px-3 py-1 rounded-full text-[12px] font-['Nunito'] font-semibold ${isDarkMode ? 'bg-[rgba(181,192,200,0.1)] text-[#b5c0c8]' : 'bg-gray-300/20 text-[#636e72]'}`}>
+                            No
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className={`px-6 py-4 font-['Nunito'] text-[14px] ${isDarkMode ? 'text-[#b5c0c8]' : 'text-[#636e72]'} max-w-[200px] truncate`}>
                       {cat.location}
@@ -349,6 +453,47 @@ export function AdminPage() {
               </p>
             </div>
           )}
+        </div>
+
+        {/* Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mt-8">
+          <div className={`rounded-[20px] p-6 ${isDarkMode ? 'bg-[#1a2028]' : 'bg-white'} shadow-md`}>
+            <div className={`font-['Nunito'] text-[14px] mb-1 ${isDarkMode ? 'text-[#b5c0c8]' : 'text-[#636e72]'}`}>Total Cats</div>
+            <div className={`font-['Fredoka'] font-semibold text-[32px] ${isDarkMode ? 'text-[#f4f7f9]' : 'text-[#2d3436]'}`} style={{ fontVariationSettings: "'wdth' 100" }}>
+              {allCats.length}
+            </div>
+          </div>
+
+          <div className={`rounded-[20px] p-6 ${isDarkMode ? 'bg-[#1a2028]' : 'bg-white'} shadow-md`}>
+            <div className={`font-['Nunito'] text-[14px] mb-1 ${isDarkMode ? 'text-[#b5c0c8]' : 'text-[#636e72]'}`}>Stray Cats</div>
+            <div className={`font-['Fredoka'] font-semibold text-[32px] text-[#ff6b6b]`} style={{ fontVariationSettings: "'wdth' 100" }}>
+              {allCats.filter(c => c.status === 'Stray').length}
+            </div>
+          </div>
+
+          <div className={`rounded-[20px] p-6 ${isDarkMode ? 'bg-[#1a2028]' : 'bg-white'} shadow-md`}>
+            <div className={`font-['Nunito'] text-[14px] mb-1 ${isDarkMode ? 'text-[#b5c0c8]' : 'text-[#636e72]'}`}>Homed Cats</div>
+            <div className={`font-['Fredoka'] font-semibold text-[32px] text-[#4ecdc4]`} style={{ fontVariationSettings: "'wdth' 100" }}>
+              {allCats.filter(c => c.status === 'Homed').length}
+            </div>
+          </div>
+
+          <div className={`rounded-[20px] p-6 ${isDarkMode ? 'bg-[#1a2028]' : 'bg-white'} shadow-md`}>
+            <div className={`font-['Nunito'] text-[14px] mb-1 ${isDarkMode ? 'text-[#b5c0c8]' : 'text-[#636e72]'}`}>TNR'd Cats</div>
+            <div className={`font-['Fredoka'] font-semibold text-[32px] text-[#2e7d32]`} style={{ fontVariationSettings: "'wdth' 100" }}>
+              {allCats.filter(c => c.tnr).length}
+            </div>
+          </div>
+
+          <div className={`rounded-[20px] p-6 ${isDarkMode ? 'bg-[#1a2028]' : 'bg-white'} shadow-md relative overflow-hidden`}>
+            <div className="absolute top-2 right-2 opacity-20">
+              <Heart className="w-12 h-12 text-[#ff6b6b]" fill="#ff6b6b" />
+            </div>
+            <div className={`font-['Nunito'] text-[14px] mb-1 ${isDarkMode ? 'text-[#b5c0c8]' : 'text-[#636e72]'}`}>Adoption Interests</div>
+            <div className={`font-['Fredoka'] font-semibold text-[32px] text-[#ff6b6b] relative z-10`} style={{ fontVariationSettings: "'wdth' 100" }}>
+              {Object.keys(adoptionInterests).length}
+            </div>
+          </div>
         </div>
       </div>
     </div>

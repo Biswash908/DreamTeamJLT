@@ -1,54 +1,72 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router';
 import { Header } from '../components/Header';
-import { fetchCats, fetchCatById, Cat } from '../data/cats';
+import { cats, homedCats } from '../data/cats';
+import { ChevronLeft, ChevronRight, MapPin, Check, Heart } from 'lucide-react';
+import { toast } from 'sonner';
 import { useDarkMode } from '../context/DarkModeContext';
-import { ChevronLeft, ChevronRight, MapPin, Check } from 'lucide-react';
 
 export function CatProfilePage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { isDarkMode } = useDarkMode();
   const [showFullDescription, setShowFullDescription] = useState(false);
-  const [allCats, setAllCats] = useState<Cat[]>([]);
-  const [currentCat, setCurrentCat] = useState<Cat | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [hasExpressedInterest, setHasExpressedInterest] = useState(false);
+  const [allCats, setAllCats] = useState([...cats, ...homedCats]);
 
-  // Load from Supabase on mount
+  // Load from localStorage on mount
   useEffect(() => {
-    const loadCat = async () => {
+    const stored = localStorage.getItem('dreamTeamCats');
+    if (stored) {
       try {
-        const data = await fetchCats();
-        setAllCats(data);
-        
-        if (id) {
-          const cat = await fetchCatById(id);
-          setCurrentCat(cat);
-        }
-      } catch (error) {
-        console.error('Failed to load cat:', error);
-      } finally {
-        setLoading(false);
+        const parsedCats = JSON.parse(stored);
+        setAllCats(parsedCats);
+      } catch (err) {
+        console.error('[v0] Error parsing localStorage cats:', err);
       }
-    };
-    
-    loadCat();
-  }, [id]);
+    }
+  }, []);
+
+  const currentCat = allCats.find(c => c.id === id);
   const currentIndex = allCats.findIndex(c => c.id === id);
-  
+
   const prevCat = currentIndex > 0 ? allCats[currentIndex - 1] : null;
   const nextCat = currentIndex < allCats.length - 1 ? allCats[currentIndex + 1] : null;
 
-  if (loading) {
-    return (
-      <div className={`content-stretch flex flex-col items-center justify-center size-full ${isDarkMode ? 'bg-[#10141a]' : 'bg-[#fff9f5]'}`}>
-        <Header />
-        <div className={`text-center ${isDarkMode ? 'text-[#b5c0c8]' : 'text-[#2d3436]'}`}>
-          <div className="font-['Fredoka:Bold',sans-serif] text-[32px] mb-[16px]">Loading...</div>
-        </div>
-      </div>
-    );
-  }
+  // Check if user has already expressed interest
+  useEffect(() => {
+    if (id) {
+      const interests = JSON.parse(localStorage.getItem('adoption-interests') || '{}');
+      setHasExpressedInterest(!!interests[id]);
+    }
+  }, [id]);
+
+  const handleExpressInterest = () => {
+    if (!currentCat || !currentCat.adoptionEmail) return;
+
+    const emailBody = `Hi Dream Team,
+
+I'm interested in adopting ${currentCat.name}! I'd love to learn more about the adoption process.
+
+A little about me:
+- Name: 
+- Contact number: 
+
+Looking forward to hearing from you!
+
+Best regards`;
+
+    const mailtoLink = `mailto:${currentCat.adoptionEmail}?subject=Adoption Inquiry - ${currentCat.name}&body=${encodeURIComponent(emailBody)}`;
+    window.location.href = mailtoLink;
+
+    // Record interest in localStorage
+    const interests = JSON.parse(localStorage.getItem('adoption-interests') || '{}');
+    interests[currentCat.id] = { timestamp: new Date().toISOString(), catName: currentCat.name, cluster: currentCat.adoptionCluster };
+    localStorage.setItem('adoption-interests', JSON.stringify(interests));
+    setHasExpressedInterest(true);
+
+    toast.success(`Interest recorded for ${currentCat.name}! Email client opening...`);
+  };
 
   if (!currentCat) {
     return (
@@ -165,6 +183,69 @@ export function CatProfilePage() {
                   </div>
                 </div>
               </div>
+
+              {/* Interested in Adopting Section - Only show if free for adoption */}
+              {currentCat.freeForAdoption && (
+              <div
+                className={`relative rounded-[48px] mb-[32px] overflow-hidden border-2 transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 cursor-pointer ${isDarkMode ? 'bg-[rgba(78,205,196,0.08)] border-[rgba(78,205,196,0.25)]' : 'bg-[#f0f9f8] border-[#d4f1ed]'}`}
+                style={{
+                  boxShadow: isDarkMode ? '0px 8px 24px rgba(0,0,0,0.2)' : '0px 8px 24px rgba(78,205,196,0.12)'
+                }}
+              >
+                {/* Decorative paw prints on the right */}
+                <div className="absolute right-4 top-8 opacity-20 pointer-events-none text-[#4ecdc4] text-4xl">
+                  <div className="text-6xl" style={{ lineHeight: '1' }}>
+                    🐾
+                  </div>
+                  <div className="text-5xl ml-4 mt-2" style={{ lineHeight: '1' }}>
+                    🐾
+                  </div>
+                </div>
+
+                <div className="relative p-8 md:p-10 max-w-2xl">
+                  {/* Icon and Heading */}
+                  <div className="flex items-start gap-5 mb-6">
+                    <div className="w-16 h-16 rounded-3xl bg-[#4ecdc4] flex items-center justify-center flex-shrink-0 shadow-lg">
+                      <Heart className="w-8 h-8 text-white" fill="white" />
+                    </div>
+                    <h3 className={`font-['Fredoka:Bold',sans-serif] font-bold text-2xl md:text-3xl leading-tight ${isDarkMode ? 'text-[#f4f7f9]' : 'text-[#2d3436]'}`} style={{ fontVariationSettings: "'wdth' 100" }}>
+                      Interested in adopting {currentCat.name}?
+                    </h3>
+                  </div>
+
+                  {/* Description */}
+                  <p className={`font-['Nunito:Regular',sans-serif] text-base md:text-lg leading-relaxed mb-8 max-w-xl ${isDarkMode ? 'text-[#b5c0c8]' : 'text-[#636e72]'}`}>
+                    If you'd like to welcome {currentCat.name} into your home, we'd love to hear from you! Click below to send us an inquiry.
+                  </p>
+
+                  {/* Button with paw icon */}
+                  <button
+                    onClick={handleExpressInterest}
+                    disabled={hasExpressedInterest}
+                    className={`rounded-full px-8 py-3 flex items-center gap-3 font-['Fredoka:SemiBold',sans-serif] font-semibold text-base transition-all duration-200 ${
+                      hasExpressedInterest
+                        ? 'bg-green-600 text-white cursor-default shadow-md'
+                        : 'bg-[#4ecdc4] text-black hover:bg-[#3db5ad] cursor-pointer shadow-lg hover:shadow-xl hover:scale-105'
+                    }`}
+                    style={{
+                      fontVariationSettings: "'wdth' 100"
+                    }}
+                  >
+                    {hasExpressedInterest ? (
+                      <>
+                        <Check className="w-5 h-5" />
+                        <span>Interest Submitted!</span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="text-lg">🐾</span>
+                        <span>I'm Interested!</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+              )}
 
               {/* Veterinary Bills */}
               {currentCat.vetBills && currentCat.vetBills.length > 0 && (
