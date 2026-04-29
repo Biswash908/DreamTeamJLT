@@ -31,14 +31,21 @@ export function HomePage() {
                 <Link to="/cats" className="no-underline">
                   <div className="bg-[#ff6b6b] rounded-[24px] px-7 py-3 flex items-center gap-2 hover:-translate-y-2 transition-all duration-300 shadow-md cursor-pointer">
                     <div className="w-5 h-5">
-                      <svg viewBox="0 0 20 20" fill="none">
-                        <circle cx="4" cy="6" r="1.5" fill="rgba(0,0,0,0.87)" />
-                        <circle cx="10" cy="6" r="1.5" fill="rgba(0,0,0,0.87)" />
-                        <circle cx="16" cy="6" r="1.5" fill="rgba(0,0,0,0.87)" />
-                        <circle cx="7" cy="11" r="1.5" fill="rgba(0,0,0,0.87)" />
-                        <circle cx="13" cy="11" r="1.5" fill="rgba(0,0,0,0.87)" />
-                        <path d="M10 14 C 6 14, 4 16, 3 18 L 17 18 C 16 16, 14 14, 10 14 Z" fill="rgba(0,0,0,0.87)" />
-                      </svg>
+                      <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+  <ellipse cx="5.5" cy="10.5" rx="2.2" ry="3" transform="rotate(-15 5.5 10.5)" />
+  <ellipse cx="9.5" cy="6.5" rx="2.2" ry="3.2" />
+  <ellipse cx="14.5" cy="6.5" rx="2.2" ry="3.2" />
+  <ellipse cx="18.5" cy="10.5" rx="2.2" ry="3" transform="rotate(15 18.5 10.5)" />
+  
+  <path d="M12 12.5
+           c-3.5 0-6 2-6.5 5
+           s1 4.5 3 4.5
+           c1.5 0 2.5-1 3.5-1
+           s2 1 3.5 1
+           c2 0 3.5-1.5 3-4.5
+           s-3-5-6.5-5z" />
+</svg>
+
                     </div>
                     <span className="font-['Fredoka'] font-medium text-[16px] text-[rgba(0,0,0,0.87)]" style={{ fontVariationSettings: "'wdth' 100" }}>See Our Cats</span>
                   </div>
