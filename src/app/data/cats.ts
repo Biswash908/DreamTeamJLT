@@ -54,12 +54,6 @@ export async function fetchCats(): Promise<Cat[]> {
   freeForAdoption: cat.free_for_adoption,
   adoptionCluster: cat.adoption_cluster,
   adoptionEmail: cat.adoption_email,
-      vetBills: (cat.vet_bills || []).map((bill: any) => ({
-        description: bill.description,
-        amount: bill.amount,
-        date: bill.date,
-        paid: bill.paid,
-      })),
     }));
   } catch (err) {
     console.error('Exception fetching cats:', err);
