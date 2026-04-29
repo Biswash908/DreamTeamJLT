@@ -2,25 +2,49 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router';
 import { Header } from '../components/Header';
 import { useDarkMode } from '../context/DarkModeContext';
-import { cats, homedCats } from '../data/cats';
+import { cats, homedCats, fetchCats, Cat } from '../data/cats';
 import { ChevronDown, ChevronUp, Filter, Scissors } from 'lucide-react';
 
 export function CatsPage() {
   const { isDarkMode } = useDarkMode();
-  const [allCats, setAllCats] = useState([...cats, ...homedCats]);
+  const [allCats, setAllCats] = useState<Cat[]>([...cats, ...homedCats]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Load from localStorage (admin dashboard data) on mount
+  // Load from Supabase on mount, fallback to localStorage
   useEffect(() => {
-    const stored = localStorage.getItem('dreamTeamCats');
-    if (stored) {
+    const loadCats = async () => {
       try {
-        const parsedCats = JSON.parse(stored);
-        setAllCats(parsedCats);
-        console.log('[v0] Loaded cats from localStorage:', parsedCats);
+        const fetchedCats = await fetchCats();
+        if (fetchedCats.length > 0) {
+          setAllCats(fetchedCats);
+          console.log('[v0] Loaded cats from Supabase:', fetchedCats);
+        } else {
+          // Fallback to localStorage if Supabase is empty
+          const stored = localStorage.getItem('dreamTeamCats');
+          if (stored) {
+            const parsedCats = JSON.parse(stored);
+            setAllCats(parsedCats);
+            console.log('[v0] Loaded cats from localStorage:', parsedCats);
+          }
+        }
       } catch (err) {
-        console.error('[v0] Error parsing localStorage cats:', err);
+        console.error('[v0] Error loading cats:', err);
+        // Fallback to localStorage on error
+        const stored = localStorage.getItem('dreamTeamCats');
+        if (stored) {
+          try {
+            const parsedCats = JSON.parse(stored);
+            setAllCats(parsedCats);
+          } catch (parseErr) {
+            console.error('[v0] Error parsing localStorage cats:', parseErr);
+          }
+        }
+      } finally {
+        setIsLoading(false);
       }
-    }
+    };
+
+    loadCats();
   }, []);
   const [searchQuery, setSearchQuery] = useState('');
   const [showStray, setShowStray] = useState(true);
@@ -29,6 +53,9 @@ export function CatsPage() {
   const [filterTNR, setFilterTNR] = useState(false);
   const [filterAdoptable, setFilterAdoptable] = useState(false);
   const [filterGender, setFilterGender] = useState<'All' | 'Male' | 'Female'>('All');
+  const [filterCluster, setFilterCluster] = useState('All');
+
+  const clusters = ['Cluster A', 'Cluster B', 'Cluster C', 'Cluster D', 'Cluster E', 'Cluster F', 'Cluster G', 'Cluster H', 'Cluster I', 'Cluster J', 'Cluster K', 'Cluster L', 'Cluster M', 'Cluster N', 'Cluster O', 'Cluster P', 'Cluster Q', 'Cluster R', 'Cluster S', 'Cluster T', 'Cluster U', 'Cluster V', 'Cluster W', 'Cluster X', 'Cluster Y', 'Cluster Z', 'Cluster Central Park'];
   
   const filteredCats = allCats.filter(cat => {
     const matchesSearch = cat.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -36,7 +63,8 @@ export function CatsPage() {
     const matchesTNR = !filterTNR || cat.tnr;
     const matchesAdoptable = !filterAdoptable || cat.status === 'Stray';
     const matchesGender = filterGender === 'All' || cat.gender === filterGender;
-    return matchesSearch && matchesTNR && matchesAdoptable && matchesGender;
+    const matchesCluster = filterCluster === 'All' || cat.adoptionCluster === filterCluster;
+    return matchesSearch && matchesTNR && matchesAdoptable && matchesGender && matchesCluster;
   });
 
   const strayCats = filteredCats.filter(c => c.status === 'Stray');
@@ -49,10 +77,10 @@ export function CatsPage() {
       <div className="flex-1 max-w-[1200px] w-full mx-auto px-6 py-12">
         {/* Page Header */}
         <div className="text-center mb-8">
-          <h1 className={`font-['Fredoka'] font-semibold text-[44px] mb-3 ${isDarkMode ? 'text-[#f4f7f9]' : 'text-[#2d3436]'}`} style={{ fontVariationSettings: "'wdth' 100" }}>
+          <h1 className={`font-['Fredoka'] font-semibold text-[28px] sm:text-[36px] md:text-[44px] mb-3 ${isDarkMode ? 'text-[#f4f7f9]' : 'text-[#2d3436]'}`} style={{ fontVariationSettings: "'wdth' 100" }}>
             Meet Our Cats
           </h1>
-          <p className={`font-['Fredoka'] font-medium text-[17.6px] max-w-[600px] mx-auto ${isDarkMode ? 'text-[#b5c0c8]' : 'text-[#636e72]'}`} style={{ fontVariationSettings: "'wdth' 100" }}>
+          <p className={`font-['Fredoka'] font-medium text-[14px] sm:text-[16px] md:text-[17.6px] max-w-[600px] mx-auto ${isDarkMode ? 'text-[#b5c0c8]' : 'text-[#636e72]'}`} style={{ fontVariationSettings: "'wdth' 100" }}>
             Each cat has a unique story. Click on any cat to learn more about them,<br />including their location and any pending vet bills.
           </p>
         </div>
@@ -114,7 +142,7 @@ export function CatsPage() {
             </div>
 
             {/* Gender Dropdown */}
-            <div>
+            <div className="mb-4">
               <label className={`block font-['Nunito'] font-semibold text-[14px] mb-2 ${isDarkMode ? 'text-[#f4f7f9]' : 'text-[#2d3436]'}`}>Gender</label>
               <select
                 value={filterGender}
@@ -124,6 +152,23 @@ export function CatsPage() {
                 <option value="All">All Genders</option>
                 <option value="Male">Male</option>
                 <option value="Female">Female</option>
+              </select>
+            </div>
+
+            {/* Cluster Dropdown */}
+            <div>
+              <label className={`block font-['Nunito'] font-semibold text-[14px] mb-2 ${isDarkMode ? 'text-[#f4f7f9]' : 'text-[#2d3436]'}`}>Cluster</label>
+              <select
+                value={filterCluster}
+                onChange={(e) => setFilterCluster(e.target.value)}
+                className={`w-full px-4 py-2.5 rounded-[12px] border font-['Nunito'] text-[16px] ${isDarkMode ? 'bg-[#10141a] border-[rgba(255,255,255,0.23)] text-[#f4f7f9]' : 'bg-white border-[rgba(0,0,0,0.23)] text-[#2d3436]'} focus:outline-none focus:border-[#ff6b6b] cursor-pointer`}
+              >
+                <option value="All">All Clusters</option>
+                {clusters.map((cluster) => (
+                  <option key={cluster} value={cluster}>
+                    {cluster}
+                  </option>
+                ))}
               </select>
             </div>
           </div>

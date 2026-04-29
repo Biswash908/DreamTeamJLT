@@ -11,7 +11,6 @@ export function CatProfilePage() {
   const navigate = useNavigate();
   const { isDarkMode } = useDarkMode();
   const [showFullDescription, setShowFullDescription] = useState(false);
-  const [hasExpressedInterest, setHasExpressedInterest] = useState(false);
   const [allCats, setAllCats] = useState([...cats, ...homedCats]);
 
   // Load from localStorage on mount
@@ -33,13 +32,7 @@ export function CatProfilePage() {
   const prevCat = currentIndex > 0 ? allCats[currentIndex - 1] : null;
   const nextCat = currentIndex < allCats.length - 1 ? allCats[currentIndex + 1] : null;
 
-  // Check if user has already expressed interest
-  useEffect(() => {
-    if (id) {
-      const interests = JSON.parse(localStorage.getItem('adoption-interests') || '{}');
-      setHasExpressedInterest(!!interests[id]);
-    }
-  }, [id]);
+
 
   const handleExpressInterest = () => {
     if (!currentCat || !currentCat.adoptionEmail) return;
@@ -59,13 +52,7 @@ Best regards`;
     const mailtoLink = `mailto:${currentCat.adoptionEmail}?subject=Adoption Inquiry - ${currentCat.name}&body=${encodeURIComponent(emailBody)}`;
     window.location.href = mailtoLink;
 
-    // Record interest in localStorage
-    const interests = JSON.parse(localStorage.getItem('adoption-interests') || '{}');
-    interests[currentCat.id] = { timestamp: new Date().toISOString(), catName: currentCat.name, cluster: currentCat.adoptionCluster };
-    localStorage.setItem('adoption-interests', JSON.stringify(interests));
-    setHasExpressedInterest(true);
-
-    toast.success(`Interest recorded for ${currentCat.name}! Email client opening...`);
+    toast.success(`Email sent for ${currentCat.name}!`);
   };
 
   if (!currentCat) {
@@ -111,7 +98,7 @@ Best regards`;
           {/* Back Button */}
           <Link to="/cats" className={`inline-flex items-center gap-[8px] mb-[24px] transition-colors no-underline ${isDarkMode ? 'text-[#b5c0c8] hover:text-[#f4f7f9]' : 'text-[#636e72] hover:text-[#2d3436]'}`}>
             <ChevronLeft className="w-[20px] h-[20px]" />
-            <span className="font-['Nunito:SemiBold',sans-serif] text-[14px]">Back to all cats</span>
+            <span className="font-['Nunito:SemiBold',sans-serif] text-[14px]">Back</span>
           </Link>
 
           {/* Main Content */}
@@ -178,14 +165,16 @@ Best regards`;
                       Location
                     </div>
                     <div className={`font-['Nunito:Medium',sans-serif] font-medium text-[16px] ${isDarkMode ? 'text-[#f4f7f9]' : 'text-[#2d3436]'}`}>
-                      {currentCat.location}
+                      {currentCat.adoptionCluster && currentCat.location 
+                        ? `${currentCat.adoptionCluster}, ${currentCat.location}` 
+                        : currentCat.location}
                     </div>
                   </div>
                 </div>
               </div>
 
               {/* Interested in Adopting Section - Only show if free for adoption */}
-              {currentCat.freeForAdoption && (
+              {currentCat.freeForAdoption === true && currentCat.status === 'Stray' && (
               <div
                 className={`relative rounded-[48px] mb-[32px] overflow-hidden border-2 transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 cursor-pointer ${isDarkMode ? 'bg-[rgba(78,205,196,0.08)] border-[rgba(78,205,196,0.25)]' : 'bg-[#f0f9f8] border-[#d4f1ed]'}`}
                 style={{
@@ -221,27 +210,13 @@ Best regards`;
                   {/* Button with paw icon */}
                   <button
                     onClick={handleExpressInterest}
-                    disabled={hasExpressedInterest}
-                    className={`rounded-full px-8 py-3 flex items-center gap-3 font-['Fredoka:SemiBold',sans-serif] font-semibold text-base transition-all duration-200 ${
-                      hasExpressedInterest
-                        ? 'bg-green-600 text-white cursor-default shadow-md'
-                        : 'bg-[#4ecdc4] text-black hover:bg-[#3db5ad] cursor-pointer shadow-lg hover:shadow-xl hover:scale-105'
-                    }`}
+                    className="rounded-full px-8 py-3 flex items-center gap-3 font-['Fredoka:SemiBold',sans-serif] font-semibold text-base transition-all duration-200 bg-[#4ecdc4] text-black hover:bg-[#3db5ad] cursor-pointer shadow-lg hover:shadow-xl hover:scale-105"
                     style={{
                       fontVariationSettings: "'wdth' 100"
                     }}
                   >
-                    {hasExpressedInterest ? (
-                      <>
-                        <Check className="w-5 h-5" />
-                        <span>Interest Submitted!</span>
-                      </>
-                    ) : (
-                      <>
-                        <span className="text-lg">🐾</span>
-                        <span>I'm Interested!</span>
-                      </>
-                    )}
+                    <span className="text-lg">🐾</span>
+                    <span>I'm Interested!</span>
                   </button>
                 </div>
               </div>

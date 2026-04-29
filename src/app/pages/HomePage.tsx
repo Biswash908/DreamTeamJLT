@@ -1,7 +1,7 @@
 import { Link } from 'react-router';
 import { Header } from '../components/Header';
 import { useDarkMode } from '../context/DarkModeContext';
-import imgDreamTeamJltLogo from '../../imports/Home-1/48d339b1aea985ce1c9f57f48eb5e2a4e70590e0.png';
+import catImage from '../../imports/Cats/48d339b1aea985ce1c9f57f48eb5e2a4e70590e0.png';
 
 export function HomePage() {
   const { isDarkMode } = useDarkMode();
@@ -58,16 +58,20 @@ export function HomePage() {
             </div>
 
             {/* Right Logo */}
-            <div className="flex-1 min-w-[300px] max-w-[400px] flex justify-center">
-              <img src={imgDreamTeamJltLogo} alt="Dream Team JLT Logo" className="w-[300px] h-[300px] object-contain" />
-            </div>
+           <div className="flex-1 min-w-[300px] max-w-[400px] flex justify-center">
+  <img
+    src={catImage}
+    alt="Cat"
+    className="max-w-full h-auto"
+  />
+</div>
           </div>
         </div>
       </div>
 
       {/* Learn More Section */}
       <div className="max-w-[1200px] mx-auto px-6 py-16">
-        <h2 className={`font-['Fredoka'] font-semibold text-[40px] text-center mb-12 ${isDarkMode ? 'text-[#f4f7f9]' : 'text-[#2d3436]'}`} style={{ fontVariationSettings: "'wdth' 100" }}>
+        <h2 className={`font-['Fredoka'] font-semibold text-[28px] sm:text-[34px] md:text-[40px] text-center mb-12 ${isDarkMode ? 'text-[#f4f7f9]' : 'text-[#2d3436]'}`} style={{ fontVariationSettings: "'wdth' 100" }}>
           Learn More About Us
         </h2>
 
@@ -133,14 +137,14 @@ export function HomePage() {
       {/* CTA Section - Full Width */}
       <div className={`w-full ${isDarkMode ? 'bg-[#2d3436]' : 'bg-[#ff6b6b]'} py-16 px-6`}>
         <div className="max-w-[1200px] mx-auto text-center">
-          <h2 className={`font-['Fredoka'] font-bold text-[36px] mb-4 ${isDarkMode ? 'text-white' : 'text-[#2d3436]'}`} style={{ fontVariationSettings: "'wdth' 100" }}>
+          <h2 className={`font-['Fredoka'] font-bold text-[24px] sm:text-[30px] md:text-[36px] mb-4 ${isDarkMode ? 'text-white' : 'text-[#2d3436]'}`} style={{ fontVariationSettings: "'wdth' 100" }}>
             Ready to Meet Your New Best Friend?
           </h2>
-          <p className={`font-['Nunito'] text-[18px] mb-8 ${isDarkMode ? 'text-[#b5c0c8]' : 'text-[#2d3436]'} opacity-90`}>
+          <p className={`font-['Nunito'] text-[14px] sm:text-[16px] md:text-[18px] mb-8 ${isDarkMode ? 'text-[#b5c0c8]' : 'text-[#2d3436]'} opacity-90`}>
             Browse our cat profiles and find your perfect companion.
           </p>
           <Link to="/cats" className="no-underline inline-block">
-            <div className={`${isDarkMode ? 'bg-[#ff6b6b] text-white' : 'bg-white text-[#ff6b6b]'} rounded-[24px] px-12 py-4 font-['Fredoka'] font-medium text-[20px] hover:scale-110 transition-transform duration-300 shadow-lg cursor-pointer`} style={{ fontVariationSettings: "'wdth' 100" }}>
+            <div className={`${isDarkMode ? 'bg-[#ff6b6b] text-white' : 'bg-white text-[#ff6b6b]'} rounded-[20px] sm:rounded-[24px] px-8 sm:px-12 py-3 sm:py-4 font-['Fredoka'] font-medium text-[14px] sm:text-[16px] md:text-[20px] hover:scale-110 transition-transform duration-300 shadow-lg cursor-pointer`} style={{ fontVariationSettings: "'wdth' 100" }}>
               Meet Adoptable Cats
             </div>
           </Link>
