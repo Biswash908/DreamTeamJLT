@@ -1,7 +1,7 @@
 import { Link, useLocation } from 'react-router';
 import { useDarkMode } from '../context/DarkModeContext';
 import JltLogo from '../../imports/Cats/JLTLogo.png';
-import JltLogoWhite from '../../imports/Cats/JLTLOGOWhite2.png';
+import JltLogoWhite from '../../imports/Cats/JLTLogoWhite2.png';
 
 function DreamTeamJltLogo({ isDarkMode }: { isDarkMode: boolean }) {
   return (
