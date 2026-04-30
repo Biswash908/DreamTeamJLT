@@ -1,13 +1,16 @@
 import { Link, useLocation } from 'react-router';
 import { useDarkMode } from '../context/DarkModeContext';
-import imgDreamTeamJltLogo from '../../imports/Home-1/48d339b1aea985ce1c9f57f48eb5e2a4e70590e0.png';
+import JltLogo from '../../imports/Cats/JLTLogo.png';
+import JltLogoWhite from '../../imports/Cats/JLTLOGOWhite2.png';
 
-function DreamTeamJltLogo() {
+function DreamTeamJltLogo({ isDarkMode }: { isDarkMode: boolean }) {
   return (
-    <div className="aspect-[40/40] flex-shrink-0 min-h-px min-w-px relative w-[40px] h-[40px]" data-name="Dream Team JLT Logo">
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <img alt="Dream Team JLT Logo" className="absolute left-0 max-w-none size-full top-0" src={imgDreamTeamJltLogo} />
-      </div>
+    <div className="w-[40px] h-[40px] relative flex-shrink-0">
+      <img
+        src={isDarkMode ? JltLogoWhite : JltLogo}
+        alt="JLT Logo"
+        className="absolute inset-0 w-full h-full object-contain scale-200"
+      />
     </div>
   );
 }
@@ -26,10 +29,10 @@ export function Header() {
           <div className="bg-clip-padding border-0 border-[transparent] border-solid content-stretch flex items-center justify-between min-h-[inherit] px-[24px] py-[9.75px] relative w-full">
             <Link to="/" className="no-underline">
               <div className="content-stretch flex gap-[16px] items-center relative shrink-0" data-name="Container">
-                <DreamTeamJltLogo />
+                <DreamTeamJltLogo isDarkMode={isDarkMode} />
                 <div className="content-stretch flex flex-col items-start relative shrink-0 max-sm:hidden">
                   <div className={`flex flex-col font-['Fredoka:SemiBold',sans-serif] font-semibold justify-center leading-[0] relative shrink-0 ${isDarkMode ? 'text-[#f4f7f9]' : 'text-[#2d3436]'} text-[22.4px] whitespace-nowrap`} style={{ fontVariationSettings: "'wdth' 100" }}>
-                    <p className="leading-[35.84px]">Dream Team JLT</p>
+                    <p className="leading-[35.84px]">JLT Cats</p>
                   </div>
                 </div>
               </div>

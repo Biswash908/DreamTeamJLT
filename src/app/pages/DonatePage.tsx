@@ -63,7 +63,7 @@ export function DonatePage() {
                             
                             <div className="flex justify-between items-center">
                               <span className={`font-['Nunito:Regular',sans-serif] text-[14px] ${isDarkMode ? 'text-[#b5c0c8]' : 'text-[#636e72]'}`}>Reference to include</span>
-                              <span className={`font-['Nunito:Bold',sans-serif] text-[14px] ${isDarkMode ? 'text-[#f4f7f9]' : 'text-[#2d3436]'}`}>Dream Team</span>
+                              <span className={`font-['Nunito:Bold',sans-serif] text-[14px] ${isDarkMode ? 'text-[#f4f7f9]' : 'text-[#2d3436]'}`}>JLT Cats</span>
                             </div>
                           </div>
 

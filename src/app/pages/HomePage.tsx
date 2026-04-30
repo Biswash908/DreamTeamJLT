@@ -1,7 +1,7 @@
 import { Link } from 'react-router';
 import { Header } from '../components/Header';
 import { useDarkMode } from '../context/DarkModeContext';
-import catImage from '../../imports/Cats/48d339b1aea985ce1c9f57f48eb5e2a4e70590e0.png';
+import catImage from '../../imports/Cats/JLT.png';
 
 export function HomePage() {
   const { isDarkMode } = useDarkMode();
@@ -31,7 +31,7 @@ export function HomePage() {
                 <Link to="/cats" className="no-underline">
                   <div className="bg-[#ff6b6b] rounded-[24px] px-7 py-3 flex items-center gap-2 hover:-translate-y-2 transition-all duration-300 shadow-md cursor-pointer">
                     <div className="w-5 h-5">
-                      <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                      <svg viewBox="0 0 24 24" fill="rgba(0,0,0,0.87)" xmlns="http://www.w3.org/2000/svg">
   <ellipse cx="5.5" cy="10.5" rx="2.2" ry="3" transform="rotate(-15 5.5 10.5)" />
   <ellipse cx="9.5" cy="6.5" rx="2.2" ry="3.2" />
   <ellipse cx="14.5" cy="6.5" rx="2.2" ry="3.2" />
@@ -116,7 +116,7 @@ export function HomePage() {
               <span className="font-['Fredoka'] font-semibold text-[18px] text-[rgba(78,205,196,0.85)]" style={{ fontVariationSettings: "'wdth' 100" }}>02</span>
             </div>
             <div className={`font-['Nunito'] text-[16px] leading-relaxed space-y-3 ${isDarkMode ? 'text-[#b5c0c8]' : 'text-[#636e72]'}`}>
-              <p>Within our Dream Team Community we currently care for over 40 cats between Clusters O and R, as well as the surrounding areas. We have eight feeding stations, all of which are regularly replenished with dry cat food and fresh water, and we endeavour to provide wet food on a daily basis.</p>
+              <p>Within our JLT cats Community we currently care for over 40 cats between Clusters O and R, as well as the surrounding areas. We have eight feeding stations, all of which are regularly replenished with dry cat food and fresh water, and we endeavour to provide wet food on a daily basis.</p>
               <p>Our work is made possible through a dedicated network of feeder volunteers. We cover vet bills through community donations and actively seek forever homes either within the UAE or internationally, fundraising towards flight expenses, where required.</p>
             </div>
           </div>
@@ -163,7 +163,7 @@ export function HomePage() {
         <div className="max-w-[1200px] mx-auto text-center">
           <div className="font-['Nunito'] text-white text-[14px] opacity-70 space-y-1">
             <p>Privacy Policy</p>
-            <p>© 2026 Dream Team JLT. All rights reserved. Made with ❤️ for cats.</p>
+            <p>© 2026 JLT Cats. All rights reserved. Made with ❤️ for cats.</p>
           </div>
         </div>
       </footer>

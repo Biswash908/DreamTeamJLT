@@ -37,7 +37,7 @@ export function CatProfilePage() {
   const handleExpressInterest = () => {
     if (!currentCat || !currentCat.adoptionEmail) return;
 
-    const emailBody = `Hi Dream Team,
+    const emailBody = `Hi JLT Cats Team,
 
 I'm interested in adopting ${currentCat.name}! I'd love to learn more about the adoption process.
 
