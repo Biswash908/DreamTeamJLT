@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router';
 import { Header } from '../components/Header';
-import { cats, homedCats } from '../data/cats';
+import { cats, homedCats, fetchCats, Cat } from '../data/cats';
 import { ChevronLeft, ChevronRight, MapPin, Check, Heart } from 'lucide-react';
 import { toast } from 'sonner';
 import { useDarkMode } from '../context/DarkModeContext';
@@ -11,20 +11,49 @@ export function CatProfilePage() {
   const navigate = useNavigate();
   const { isDarkMode } = useDarkMode();
   const [showFullDescription, setShowFullDescription] = useState(false);
-  const [allCats, setAllCats] = useState([...cats, ...homedCats]);
+  const [allCats, setAllCats] = useState<Cat[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Load from localStorage on mount
-  useEffect(() => {
-    const stored = localStorage.getItem('dreamTeamCats');
-    if (stored) {
-      try {
-        const parsedCats = JSON.parse(stored);
-        setAllCats(parsedCats);
-      } catch (err) {
-        console.error('[v0] Error parsing localStorage cats:', err);
+useEffect(() => {
+  const loadCats = async () => {
+    try {
+      const fetchedCats = await fetchCats();
+
+      if (fetchedCats.length > 0) {
+        setAllCats(fetchedCats);
+        console.log('[v0] Loaded cats from Supabase:', fetchedCats);
+      } else {
+        // fallback to localStorage
+        const stored = localStorage.getItem('dreamTeamCats');
+
+        if (stored) {
+          const parsedCats = JSON.parse(stored);
+          setAllCats(parsedCats);
+        } else {
+          setAllCats([...cats, ...homedCats]);
+        }
       }
+    } catch (err) {
+      console.error('[v0] Error loading cats:', err);
+
+      // fallback
+      const stored = localStorage.getItem('dreamTeamCats');
+
+      if (stored) {
+        try {
+          const parsedCats = JSON.parse(stored);
+          setAllCats(parsedCats);
+        } catch {
+          setAllCats([...cats, ...homedCats]);
+        }
+      }
+    } finally {
+      setIsLoading(false);
     }
-  }, []);
+  };
+
+  loadCats();
+}, []);
 
   const currentCat = allCats.find(c => c.id === id);
   const currentIndex = allCats.findIndex(c => c.id === id);
@@ -54,6 +83,16 @@ Best regards`;
 
     toast.success(`Email sent for ${currentCat.name}!`);
   };
+
+  if (isLoading) {
+  return (
+    <div className={`min-h-screen flex items-center justify-center ${isDarkMode ? 'bg-[#10141a]' : 'bg-[#fff9f5]'}`}>
+      <div className={`${isDarkMode ? 'text-white' : 'text-black'}`}>
+        Loading...
+      </div>
+    </div>
+  );
+}
 
   if (!currentCat) {
     return (
