@@ -652,18 +652,6 @@ useEffect(() => {
                   />
                 </div>
 
-                {/* Spotted Date */}
-                <div>
-                  <label className={`block font-['Nunito'] font-semibold text-[14px] mb-2 ${isDarkMode ? 'text-[#f4f7f9]' : 'text-[#2d3436]'}`}>Spotted Date</label>
-                  <input
-                    type="text"
-                    value={editingCat.spottedDate}
-                    onChange={(e) => setEditingCat({ ...editingCat, spottedDate: e.target.value })}
-                    className={`w-full px-4 py-2.5 rounded-[12px] border font-['Nunito'] text-[16px] ${isDarkMode ? 'bg-[#10141a] border-[rgba(255,255,255,0.23)] text-[#f4f7f9]' : 'bg-white border-[rgba(0,0,0,0.23)] text-[#2d3436]'} focus:outline-none focus:border-[#ff6b6b]`}
-                    placeholder="e.g., February 2025"
-                  />
-                </div>
-
                 {/* Description */}
                 <div>
                   <label className={`block font-['Nunito'] font-semibold text-[14px] mb-2 ${isDarkMode ? 'text-[#f4f7f9]' : 'text-[#2d3436]'}`}>Description *</label>

@@ -253,8 +253,8 @@ Best regards`;
                       Location
                     </div>
                     <div className={`font-['Nunito:Medium',sans-serif] font-medium text-[16px] ${isDarkMode ? 'text-[#f4f7f9]' : 'text-[#2d3436]'}`}>
-                      {currentCat.adoptionCluster && currentCat.location 
-                        ? `${currentCat.adoptionCluster}, ${currentCat.location}` 
+                      {currentCat.location && currentCat.adoptionCluster 
+                        ? `${currentCat.location}, ${currentCat.adoptionCluster}` 
                         : currentCat.location}
                     </div>
                   </div>
