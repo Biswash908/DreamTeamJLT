@@ -2,10 +2,173 @@ import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router';
 import { Header } from '../components/Header';
 import { cats, homedCats, fetchCats, Cat } from '../data/cats';
-import { ChevronLeft, ChevronRight, MapPin, Check, Heart, Home, FileText, Download } from 'lucide-react';
+import { ChevronLeft, ChevronRight, MapPin, Check, Heart, Home, FileText, Download, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { useDarkMode } from '../context/DarkModeContext';
 import { supabase } from '../lib/supabaseClient';
+
+// Bills Section Component
+function BillsSection({ bills, isDarkMode, formatDate }: { bills: any[]; isDarkMode: boolean; formatDate: (date: string) => string }) {
+  const [showAllPaid, setShowAllPaid] = useState(false);
+  const [showAllUnpaid, setShowAllUnpaid] = useState(false);
+
+  const paidBills = bills.filter(bill => bill.paid);
+  const unpaidBills = bills.filter(bill => !bill.paid);
+  
+  const displayPaidBills = showAllPaid ? paidBills : paidBills.slice(0, 2);
+  const displayUnpaidBills = showAllUnpaid ? unpaidBills : unpaidBills.slice(0, 2);
+
+  const totalBills = paidBills.length + unpaidBills.length;
+  const hasMorePaid = paidBills.length > 2;
+  const hasMoreUnpaid = unpaidBills.length > 2;
+  const totalMore = (showAllPaid ? 0 : Math.max(0, paidBills.length - 2)) + (showAllUnpaid ? 0 : Math.max(0, unpaidBills.length - 2));
+
+  return (
+    <div>
+      <div className={`font-['Fredoka:SemiBold',sans-serif] font-semibold text-[20px] mb-[16px] ${isDarkMode ? 'text-[#f4f7f9]' : 'text-[#2d3436]'}`} style={{ fontVariationSettings: "'wdth' 100" }}>
+        Veterinary Bills
+      </div>
+
+      {totalBills > 0 ? (
+        <div>
+          {/* Paid Bills Section */}
+          {paidBills.length > 0 && (
+            <div className="mb-6">
+              <div className={`font-['Nunito:SemiBold',sans-serif] font-semibold text-[14px] mb-[12px] ${isDarkMode ? 'text-[#7a9f93]' : 'text-[#636e72]'}`}>
+                Paid Bills
+              </div>
+              <div className="space-y-3">
+                {displayPaidBills.map((bill, index) => (
+                  <div 
+                    key={index}
+                    className={`border-l-4 border-[#4ecdc4] rounded-[16px] p-[16px] flex items-center justify-between gap-[16px] max-sm:flex-col max-sm:items-start ${isDarkMode ? 'bg-[rgba(78,205,196,0.06)]' : 'bg-[rgba(78,205,196,0.04)]'}`}
+                    style={{ boxShadow: isDarkMode ? '0px 2px 1px -1px rgba(0,0,0,0.4), 0px 1px 1px 0px rgba(0,0,0,0.28), 0px 1px 3px 0px rgba(0,0,0,0.24)' : '0px 2px 1px -1px rgba(0,0,0,0.2), 0px 1px 1px 0px rgba(0,0,0,0.14), 0px 1px 3px 0px rgba(0,0,0,0.12)' }}
+                  >
+                    <div className="flex items-center gap-[16px] flex-1">
+                      <div className="w-[24px] h-[24px] rounded-full bg-[#4ecdc4] flex items-center justify-center flex-shrink-0">
+                        <Check className="w-[16px] h-[16px] text-white" />
+                      </div>
+                      <div>
+                        <div className={`font-['Nunito:SemiBold',sans-serif] font-semibold text-[16px] mb-[4px] ${isDarkMode ? 'text-[#f4f7f9]' : 'text-[#2d3436]'}`}>
+                          {bill.description}
+                        </div>
+                        <div className={`font-['Nunito:Regular',sans-serif] text-[14px] ${isDarkMode ? 'text-[#b5c0c8]' : 'text-[#636e72]'}`}>
+                          Paid: {formatDate(bill.date)}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-[12px] flex-shrink-0">
+                      {bill.file_url && (
+                        <a
+                          href={bill.file_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-[6px] px-[8px] py-[4px] rounded-[8px] bg-[#4ecdc4]/20 hover:bg-[#4ecdc4]/30 transition-colors"
+                        >
+                          <Download className="w-[14px] h-[14px] text-[#4ecdc4]" />
+                          <span className="font-['Nunito:SemiBold',sans-serif] text-[#4ecdc4] text-[12px]">View</span>
+                        </a>
+                      )}
+                      <div className="border border-[rgba(46,125,50,0.7)] rounded-[16px] px-[11px] py-[6px]">
+                        <span className="font-['Nunito:SemiBold',sans-serif] text-[#2e7d32] text-[13px]">AED {bill.amount}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                {hasMorePaid && !showAllPaid && (
+                  <button
+                    onClick={() => setShowAllPaid(true)}
+                    className={`w-full py-2 rounded-[12px] font-['Nunito:SemiBold',sans-serif] text-[14px] transition-colors ${isDarkMode ? 'bg-[rgba(78,205,196,0.08)] hover:bg-[rgba(78,205,196,0.15)] text-[#4ecdc4]' : 'bg-[rgba(78,205,196,0.08)] hover:bg-[rgba(78,205,196,0.15)] text-[#4ecdc4]'}`}
+                  >
+                    Show {paidBills.length - 2} more paid bills
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Unpaid Bills Section */}
+          {unpaidBills.length > 0 && (
+            <div className="mb-6">
+              <div className={`font-['Nunito:SemiBold',sans-serif] font-semibold text-[14px] mb-[12px] ${isDarkMode ? 'text-[#d88080]' : 'text-[#636e72]'}`}>
+                Pending Bills
+              </div>
+              <div className="space-y-3">
+                {displayUnpaidBills.map((bill, index) => (
+                  <div 
+                    key={index}
+                    className={`border-l-4 border-[#ff6b6b] rounded-[16px] p-[16px] flex items-center justify-between gap-[16px] max-sm:flex-col max-sm:items-start ${isDarkMode ? 'bg-[rgba(255,107,107,0.06)]' : 'bg-[rgba(255,107,107,0.04)]'}`}
+                    style={{ boxShadow: isDarkMode ? '0px 2px 1px -1px rgba(0,0,0,0.4), 0px 1px 1px 0px rgba(0,0,0,0.28), 0px 1px 3px 0px rgba(0,0,0,0.24)' : '0px 2px 1px -1px rgba(0,0,0,0.2), 0px 1px 1px 0px rgba(0,0,0,0.14), 0px 1px 3px 0px rgba(0,0,0,0.12)' }}
+                  >
+                    <div className="flex items-center gap-[16px] flex-1">
+                      <div className="w-[24px] h-[24px] rounded-full bg-[#ff6b6b] flex items-center justify-center flex-shrink-0">
+                        <AlertCircle className="w-[16px] h-[16px] text-white" />
+                      </div>
+                      <div>
+                        <div className={`font-['Nunito:SemiBold',sans-serif] font-semibold text-[16px] mb-[4px] ${isDarkMode ? 'text-[#f4f7f9]' : 'text-[#2d3436]'}`}>
+                          {bill.description}
+                        </div>
+                        <div className={`font-['Nunito:Regular',sans-serif] text-[14px] ${isDarkMode ? 'text-[#b5c0c8]' : 'text-[#636e72]'}`}>
+                          Due: {formatDate(bill.date)}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-[12px] flex-shrink-0">
+                      {bill.file_url && (
+                        <a
+                          href={bill.file_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-[6px] px-[8px] py-[4px] rounded-[8px] bg-[#ff6b6b]/20 hover:bg-[#ff6b6b]/30 transition-colors"
+                        >
+                          <Download className="w-[14px] h-[14px] text-[#ff6b6b]" />
+                          <span className="font-['Nunito:SemiBold',sans-serif] text-[#ff6b6b] text-[12px]">View</span>
+                        </a>
+                      )}
+                      <div className="border border-[rgba(255,107,107,0.7)] rounded-[16px] px-[11px] py-[6px]">
+                        <span className="font-['Nunito:SemiBold',sans-serif] text-[#ff6b6b] text-[13px]">AED {bill.amount}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                {hasMoreUnpaid && !showAllUnpaid && (
+                  <button
+                    onClick={() => setShowAllUnpaid(true)}
+                    className={`w-full py-2 rounded-[12px] font-['Nunito:SemiBold',sans-serif] text-[14px] transition-colors ${isDarkMode ? 'bg-[rgba(255,107,107,0.08)] hover:bg-[rgba(255,107,107,0.15)] text-[#ff6b6b]' : 'bg-[rgba(255,107,107,0.08)] hover:bg-[rgba(255,107,107,0.15)] text-[#ff6b6b]'}`}
+                  >
+                    Show {unpaidBills.length - 2} more pending bills
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Show all bills button - only if there are more bills */}
+          {totalMore > 0 && !showAllPaid && !showAllUnpaid && (
+            <button
+              onClick={() => {
+                if (hasMorePaid) setShowAllPaid(true);
+                if (hasMoreUnpaid) setShowAllUnpaid(true);
+              }}
+              className={`w-full py-2 rounded-[12px] font-['Nunito:SemiBold',sans-serif] text-[14px] transition-colors ${isDarkMode ? 'border border-[rgba(180,192,200,0.3)] text-[#b5c0c8] hover:bg-[rgba(180,192,200,0.1)]' : 'border border-[rgba(99,110,114,0.3)] text-[#636e72] hover:bg-[rgba(99,110,114,0.1)]'}`}
+            >
+              Show all bills
+            </button>
+          )}
+        </div>
+      ) : (
+        <div className="flex flex-col items-center gap-[16px] py-[48px]">
+          <div className="w-[80px] h-[80px] rounded-full bg-[#4ecdc4] flex items-center justify-center">
+            <Check className="w-[40px] h-[40px] text-white" />
+          </div>
+          <div className={`font-['Nunito:SemiBold',sans-serif] font-semibold text-[16px] text-center ${isDarkMode ? 'text-[#b5c0c8]' : 'text-[#636e72]'}`}>
+            No vet bills - this cat is healthy!
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function CatProfilePage() {
   const { id } = useParams();
@@ -30,14 +193,17 @@ export function CatProfilePage() {
     if (!location) return '';
     if (!clusters || clusters.length === 0) return location;
     
+    let clusterString = '';
     if (clusters.length === 1) {
-      return `${location}, ${clusters[0]}`;
+      clusterString = clusters[0];
     } else if (clusters.length === 2) {
-      return `${location}, ${clusters[0]} and ${clusters[1]}`;
+      clusterString = `${clusters[0]} and ${clusters[1]}`;
     } else {
       const allButLast = clusters.slice(0, -1).join(', ');
-      return `${location}, ${allButLast} and ${clusters[clusters.length - 1]}`;
+      clusterString = `${allButLast} and ${clusters[clusters.length - 1]}`;
     }
+    
+    return `${location} (${clusterString})`;
   };
 
   const fetchBills = async (catId: string) => {
@@ -108,6 +274,11 @@ useEffect(() => {
 
   const prevCat = currentIndex > 0 ? allCats[currentIndex - 1] : null;
   const nextCat = currentIndex < allCats.length - 1 ? allCats[currentIndex + 1] : null;
+
+  // Debug: Log current cat data
+  if (currentCat) {
+    console.log('[v0] Current cat:', currentCat.name, 'adoptionClusters:', currentCat.adoptionClusters);
+  }
 
   // Fetch bills when currentCat changes
   useEffect(() => {
@@ -227,8 +398,8 @@ Best regards`;
                   </div>
                   {currentCat.tnr && (
                     <div className={`rounded-[16px] px-[12px] py-[6px] flex items-center gap-[6px] ${isDarkMode ? 'bg-[#2e7d32]' : 'bg-[#2e7d32]'}`}>
-                      <div className={`w-[16px] h-[16px] rounded-full flex items-center justify-center flex-shrink-0 ${isDarkMode ? 'bg-black' : 'bg-white'}`}>
-                        <Check className={`w-[12px] h-[12px] ${isDarkMode ? 'text-black' : 'text-[#2e7d32]'}`} />
+                      <div className={`w-[16px] h-[16px] rounded-full flex items-center justify-center flex-shrink-0 ${isDarkMode ? 'bg-white' : 'bg-white'}`}>
+                        <Check className={`w-[12px] h-[12px] text-[#2e7d32]`} />
                       </div>
                       <span className="font-['Nunito:SemiBold',sans-serif] text-white text-[13px]">TNR</span>
                     </div>
@@ -341,62 +512,7 @@ Best regards`;
               )}
 
               {/* Veterinary Bills */}
-              <div>
-                <div className={`font-['Fredoka:SemiBold',sans-serif] font-semibold text-[20px] mb-[16px] ${isDarkMode ? 'text-[#f4f7f9]' : 'text-[#2d3436]'}`} style={{ fontVariationSettings: "'wdth' 100" }}>
-                  Veterinary Bills
-                </div>
-
-                {bills && bills.length > 0 ? (
-                  <div>
-
-                    {bills.filter(bill => bill.paid).map((bill, index) => (
-                      <div 
-                        key={index}
-                        className={`border-l-4 border-[#4ecdc4] rounded-[16px] p-[16px] mb-[16px] flex items-center justify-between gap-[16px] max-sm:flex-col max-sm:items-start ${isDarkMode ? 'bg-[rgba(78,205,196,0.06)]' : 'bg-[rgba(78,205,196,0.04)]'}`}
-                        style={{ boxShadow: isDarkMode ? '0px 2px 1px -1px rgba(0,0,0,0.4), 0px 1px 1px 0px rgba(0,0,0,0.28), 0px 1px 3px 0px rgba(0,0,0,0.24)' : '0px 2px 1px -1px rgba(0,0,0,0.2), 0px 1px 1px 0px rgba(0,0,0,0.14), 0px 1px 3px 0px rgba(0,0,0,0.12)' }}
-                      >
-                        <div className="flex items-center gap-[16px] flex-1">
-                          <div className="w-[24px] h-[24px] rounded-full bg-[#4ecdc4] flex items-center justify-center flex-shrink-0">
-                            <Check className="w-[16px] h-[16px] text-white" />
-                          </div>
-                          <div>
-                            <div className={`font-['Nunito:SemiBold',sans-serif] font-semibold text-[16px] mb-[4px] ${isDarkMode ? 'text-[#f4f7f9]' : 'text-[#2d3436]'}`}>
-                              {bill.description}
-                            </div>
-                            <div className={`font-['Nunito:Regular',sans-serif] text-[14px] ${isDarkMode ? 'text-[#b5c0c8]' : 'text-[#636e72]'}`}>
-                              Paid: {formatDate(bill.date)}
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-[12px] flex-shrink-0">
-                          {bill.file_url && (
-                            <a
-                              href={bill.file_url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center gap-[6px] px-[8px] py-[4px] rounded-[8px] bg-[#4ecdc4]/20 hover:bg-[#4ecdc4]/30 transition-colors"
-                            >
-                              <Download className="w-[14px] h-[14px] text-[#4ecdc4]" />
-                              <span className="font-['Nunito:SemiBold',sans-serif] text-[#4ecdc4] text-[12px]">View</span>
-                            </a>
-                          )}
-                          <div className="border border-[rgba(46,125,50,0.7)] rounded-[16px] px-[11px] py-[6px]">
-                            <span className="font-['Nunito:SemiBold',sans-serif] text-[#2e7d32] text-[13px]">AED {bill.amount}</span>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center gap-[16px] py-[48px]">
-                    <div className="w-[80px] h-[80px] rounded-full bg-[#4ecdc4] flex items-center justify-center">
-                      <Check className="w-[40px] h-[40px] text-white" />
-                    </div>
-                    <div className={`font-['Nunito:SemiBold',sans-serif] font-semibold text-[16px] text-center ${isDarkMode ? 'text-[#b5c0c8]' : 'text-[#636e72]'}`}>
-                      No vet bills - this cat is healthy!
-                    </div>
-                  </div>
-                )}
+              <BillsSection bills={bills} isDarkMode={isDarkMode} formatDate={formatDate} />
               </div>
 
 
@@ -431,6 +547,5 @@ Best regards`;
           </div>
         </div>
       </div>
-    </div>
   );
 }

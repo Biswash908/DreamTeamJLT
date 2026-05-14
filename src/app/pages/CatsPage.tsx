@@ -58,11 +58,26 @@ export function CatsPage() {
   const clusters = ['Cluster A', 'Cluster B', 'Cluster C', 'Cluster D', 'Cluster E', 'Cluster F', 'Cluster G', 'Cluster H', 'Cluster I', 'Cluster J', 'Cluster K', 'Cluster L', 'Cluster M', 'Cluster N', 'Cluster O', 'Cluster P', 'Cluster Q', 'Cluster R', 'Cluster S', 'Cluster T', 'Cluster U', 'Cluster V', 'Cluster W', 'Cluster X', 'Cluster Y', 'Cluster Z', 'Cluster Central Park'];
   
   const filteredCats = allCats.filter(cat => {
-    if (!showHomedCats && cat.status === 'Homed') return false;
-    if (showHomedCats && cat.status === 'Stray') return false;
+    // Filter by status (Stray/Homed)
+    if (!showStray && cat.status === 'Stray') return false;
+    if (!showHomed && cat.status === 'Homed') return false;
 
+    // Filter by search query
+    const matchesSearch = cat.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      cat.breed.toLowerCase().includes(searchQuery.toLowerCase());
+
+    // Filter by TNR status
+    const matchesTNR = !filterTNR || cat.tnr;
+
+    // Filter by adoptable status
+    const matchesAdoptable = !filterAdoptable || cat.freeForAdoption;
+
+    // Filter by gender
     const matchesGender = filterGender === 'All' || cat.gender === filterGender;
+
+    // Filter by clusters (multiple selection)
     const matchesCluster = filterClusters.length === 0 || (cat.adoptionClusters && cat.adoptionClusters.some(cluster => filterClusters.includes(cluster)));
+
     return matchesSearch && matchesTNR && matchesAdoptable && matchesGender && matchesCluster;
   });
 

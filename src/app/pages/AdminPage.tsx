@@ -23,6 +23,7 @@ export function AdminPage() {
   const [showSortModal, setShowSortModal] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [isUploadingVetBill, setIsUploadingVetBill] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const clustersList = ['Cluster A', 'Cluster B', 'Cluster C', 'Cluster D', 'Cluster E', 'Cluster F', 'Cluster G', 'Cluster H', 'Cluster I', 'Cluster J', 'Cluster K', 'Cluster L', 'Cluster M', 'Cluster N', 'Cluster O', 'Cluster P', 'Cluster Q', 'Cluster R', 'Cluster S', 'Cluster T', 'Cluster U', 'Cluster V', 'Cluster W', 'Cluster X', 'Cluster Y', 'Cluster Z', 'Cluster Central Park'];
 
@@ -73,9 +74,10 @@ useEffect(() => {
               location: cat.location,
               spotted_date: cat.spottedDate,
               free_for_adoption: cat.freeForAdoption || false,
-              adoption_cluster: cat.adoptionCluster || null,
+              adoption_clusters: cat.adoptionClusters && cat.adoptionClusters.length > 0 ? cat.adoptionClusters : [],
               adoption_email: cat.adoptionEmail || null,
             };
+            console.log(`[v0] Saving cat ${cat.name} with clusters:`, insertData.adoption_clusters);
 
             const { error: insertError } = await supabase
               .from('cats')
@@ -111,7 +113,7 @@ useEffect(() => {
                 description: bill.description,
                 amount: bill.amount || null,
                 date: bill.date,
-                paid: true,
+                paid: bill.paid ?? false,
                 file_url: bill.fileUrl || null
               }));
 
@@ -178,13 +180,14 @@ useEffect(() => {
   const handleSave = async () => {
     if (!editingCat) return;
 
-    if (isAddingNew) {
-      await saveCats([...allCats, editingCat]);
-      setIsAddingNew(false);
-    } else {
-      await saveCats(allCats.map(c => c.id === editingCat.id ? editingCat : c));
-    }
+    setIsSaving(true);
+
+    const updatedCats = isAddingNew ? [...allCats, editingCat] : allCats.map(c => c.id === editingCat.id ? editingCat : c);
+    await saveCats(updatedCats);
+
+    setIsSaving(false);
     setEditingCat(null);
+    setIsAddingNew(false);
   };
 
   const handleDelete = async (id: string) => {
@@ -274,7 +277,7 @@ useEffect(() => {
         description: bill.description,
         amount: bill.amount || '',
         date: bill.date,
-        paid: true, // All bills are marked as paid in DB
+        paid: bill.paid ?? false,
         fileUrl: bill.file_url || ''
       }));
     } catch (err) {
@@ -741,7 +744,7 @@ useEffect(() => {
                           ...editingCat,
                           vetBills: [
                             ...(editingCat.vetBills || []),
-                            { description: '', amount: '', date: '', paid: true, fileUrl: '' }
+                            { description: '', amount: '', date: '', paid: false, fileUrl: '' }
                           ]
                         });
                       }}
@@ -825,6 +828,23 @@ useEffect(() => {
                               </div>
                             </div>
 
+                            {/* Paid Checkbox */}
+                            <div>
+                              <label className={`flex items-center gap-2 cursor-pointer`}>
+                                <input
+                                  type="checkbox"
+                                  checked={bill.paid || false}
+                                  onChange={(e) => {
+                                    const newBills = [...(editingCat.vetBills || [])];
+                                    newBills[billIndex] = { ...bill, paid: e.target.checked };
+                                    setEditingCat({ ...editingCat, vetBills: newBills });
+                                  }}
+                                  className={`w-4 h-4 rounded border-2 cursor-pointer accent-[#4ecdc4]`}
+                                />
+                                <span className={`font-['Nunito'] font-semibold text-[12px] ${isDarkMode ? 'text-[#f4f7f9]' : 'text-[#2d3436]'}`}>Mark as paid</span>
+                              </label>
+                            </div>
+
                             {/* File Upload (Optional) */}
                             <div>
                               <label className={`block font-['Nunito'] font-semibold text-[12px] mb-2 ${isDarkMode ? 'text-[#f4f7f9]' : 'text-[#2d3436]'}`}>Upload Receipt/Invoice (Optional)</label>
@@ -885,12 +905,12 @@ useEffect(() => {
                 <div className="flex gap-3 pt-4">
                   <button
                     onClick={handleSave}
-                    disabled={!editingCat.name || !editingCat.breed || !editingCat.image || !editingCat.description || !editingCat.location}
+                    disabled={isSaving || !editingCat.name || !editingCat.breed || !editingCat.image || !editingCat.description || !editingCat.location}
                     className="flex-1 bg-[#4ecdc4] hover:bg-[#3db8b0] disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded-[16px] px-6 py-3 flex items-center justify-center gap-2 font-['Fredoka'] font-medium text-[16px] transition-colors shadow-lg"
                     style={{ fontVariationSettings: "'wdth' 100" }}
                   >
                     <Save className="w-5 h-5" />
-                    Save Changes
+                    {isSaving ? 'Saving...' : 'Save Changes'}
                   </button>
                   <button
                     onClick={handleCancel}
@@ -986,8 +1006,8 @@ useEffect(() => {
                       </div>
                     </td>
                     <td className={`px-6 py-4 font-['Nunito'] text-[14px] ${isDarkMode ? 'text-[#b5c0c8]' : 'text-[#636e72]'} max-w-[200px] truncate`}>
-                      {cat.adoptionCluster && cat.location 
-                        ? `${cat.adoptionCluster}, ${cat.location}` 
+                      {cat.adoptionClusters && cat.location 
+                        ? `${cat.adoptionClusters}, ${cat.location}` 
                         : cat.location}
                     </td>
                     <td className="px-6 py-4">
