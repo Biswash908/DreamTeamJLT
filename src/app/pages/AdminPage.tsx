@@ -166,10 +166,9 @@ useEffect(() => {
       image: '',
       description: '',
       location: '',
-      spottedDate: new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
       vetBills: [],
       freeForAdoption: false,
-      adoptionCluster: 'All',
+      adoptionClusters: [],
       adoptionEmail: ''
     };
     setEditingCat(newCat);
@@ -338,12 +337,12 @@ useEffect(() => {
       (sortByTNR === 'All' || (sortByTNR === 'Yes' ? cat.tnr : !cat.tnr)) &&
       (sortByStatus === 'All' || cat.status === sortByStatus) &&
       (sortByAdoption === 'All' || (sortByAdoption === 'Yes' ? cat.freeForAdoption : !cat.freeForAdoption)) &&
-      (sortByCluster === 'All' || cat.adoptionCluster === sortByCluster)
+      (sortByCluster === 'All' || (cat.adoptionClusters && cat.adoptionClusters.includes(sortByCluster)))
     )
     .sort((a, b) => {
-      // Primary sort: by cluster
-      const clusterA = a.adoptionCluster || 'z-unknown'; // Sort unknowns to end
-      const clusterB = b.adoptionCluster || 'z-unknown';
+      // Primary sort: by first cluster
+      const clusterA = (a.adoptionClusters && a.adoptionClusters.length > 0) ? a.adoptionClusters[0] : 'z-unknown'; // Sort unknowns to end
+      const clusterB = (b.adoptionClusters && b.adoptionClusters.length > 0) ? b.adoptionClusters[0] : 'z-unknown';
       const clusterCompare = clusterA.localeCompare(clusterB);
       
       if (clusterCompare !== 0) return clusterCompare;
@@ -677,23 +676,41 @@ useEffect(() => {
                   </label>
                 </div>
 
-                {/* Adoption Cluster & Email */}
+                {/* Adoption Clusters & Email */}
                 <div className="space-y-4 pt-4">
                   <div>
-                    <label className={`block font-['Nunito'] font-semibold text-[14px] mb-2 ${isDarkMode ? 'text-[#f4f7f9]' : 'text-[#2d3436]'}`}>Cluster Location</label>
-                    <select
-                      value={editingCat.adoptionCluster || ''}
-                      onChange={(e) => setEditingCat({ ...editingCat, adoptionCluster: e.target.value })}
-                      disabled={clustersLoading}
-                      className={`w-full px-4 py-2.5 rounded-[12px] border font-['Nunito'] text-[16px] ${isDarkMode ? 'bg-[#10141a] border-[rgba(255,255,255,0.23)] text-[#f4f7f9]' : 'bg-white border-[rgba(0,0,0,0.23)] text-[#2d3436]'} focus:outline-none focus:border-[#4ecdc4] cursor-pointer ${clustersLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-                    >
-                      <option value="">{clustersLoading ? 'Loading clusters...' : 'Select a cluster...'}</option>
-                      {clusters.map((cluster) => (
-                        <option key={cluster.id} value={cluster.cluster_name}>
-                          {cluster.cluster_name}
-                        </option>
-                      ))}
-                    </select>
+                    <label className={`block font-['Nunito'] font-semibold text-[14px] mb-3 ${isDarkMode ? 'text-[#f4f7f9]' : 'text-[#2d3436]'}`}>Cluster Locations</label>
+                    <div className="space-y-2 max-h-[200px] overflow-y-auto p-3 rounded-[12px] border ${isDarkMode ? 'bg-[#10141a] border-[rgba(255,255,255,0.23)]' : 'bg-white border-[rgba(0,0,0,0.23)]'}">
+                      {clustersLoading ? (
+                        <p className={`font-['Nunito'] text-[14px] ${isDarkMode ? 'text-[#b5c0c8]' : 'text-[#636e72]'}`}>Loading clusters...</p>
+                      ) : (
+                        clusters.map((cluster) => (
+                          <label key={cluster.id} className="flex items-center cursor-pointer gap-2">
+                            <input
+                              type="checkbox"
+                              checked={(editingCat.adoptionClusters || []).includes(cluster.cluster_name)}
+                              onChange={(e) => {
+                                const clusters = editingCat.adoptionClusters || [];
+                                if (e.target.checked) {
+                                  setEditingCat({ 
+                                    ...editingCat, 
+                                    adoptionClusters: [...clusters, cluster.cluster_name] 
+                                  });
+                                } else {
+                                  setEditingCat({ 
+                                    ...editingCat, 
+                                    adoptionClusters: clusters.filter(c => c !== cluster.cluster_name) 
+                                  });
+                                }
+                              }}
+                              disabled={clustersLoading}
+                              className={`w-4 h-4 rounded border-2 cursor-pointer ${(editingCat.adoptionClusters || []).includes(cluster.cluster_name) ? 'border-[#4ecdc4] bg-[#4ecdc4]' : isDarkMode ? 'border-[rgba(255,255,255,0.23)]' : 'border-[rgba(0,0,0,0.23)]'}`}
+                            />
+                            <span className={`font-['Nunito'] text-[14px] ${isDarkMode ? 'text-[#f4f7f9]' : 'text-[#2d3436]'}`}>{cluster.cluster_name}</span>
+                          </label>
+                        ))
+                      )}
+                    </div>
                   </div>
 
                   <div>

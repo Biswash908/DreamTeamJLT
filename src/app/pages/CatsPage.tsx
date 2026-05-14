@@ -53,17 +53,16 @@ export function CatsPage() {
   const [filterTNR, setFilterTNR] = useState(false);
   const [filterAdoptable, setFilterAdoptable] = useState(false);
   const [filterGender, setFilterGender] = useState<'All' | 'Male' | 'Female'>('All');
-  const [filterCluster, setFilterCluster] = useState('All');
+  const [filterClusters, setFilterClusters] = useState<string[]>([]);
 
   const clusters = ['Cluster A', 'Cluster B', 'Cluster C', 'Cluster D', 'Cluster E', 'Cluster F', 'Cluster G', 'Cluster H', 'Cluster I', 'Cluster J', 'Cluster K', 'Cluster L', 'Cluster M', 'Cluster N', 'Cluster O', 'Cluster P', 'Cluster Q', 'Cluster R', 'Cluster S', 'Cluster T', 'Cluster U', 'Cluster V', 'Cluster W', 'Cluster X', 'Cluster Y', 'Cluster Z', 'Cluster Central Park'];
   
   const filteredCats = allCats.filter(cat => {
-    const matchesSearch = cat.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          cat.breed.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesTNR = !filterTNR || cat.tnr;
-    const matchesAdoptable = !filterAdoptable || cat.status === 'Stray';
+    if (!showHomedCats && cat.status === 'Homed') return false;
+    if (showHomedCats && cat.status === 'Stray') return false;
+
     const matchesGender = filterGender === 'All' || cat.gender === filterGender;
-    const matchesCluster = filterCluster === 'All' || cat.adoptionCluster === filterCluster;
+    const matchesCluster = filterClusters.length === 0 || (cat.adoptionClusters && cat.adoptionClusters.some(cluster => filterClusters.includes(cluster)));
     return matchesSearch && matchesTNR && matchesAdoptable && matchesGender && matchesCluster;
   });
 
@@ -157,19 +156,26 @@ export function CatsPage() {
 
             {/* Cluster Dropdown */}
             <div>
-              <label className={`block font-['Nunito'] font-semibold text-[14px] mb-2 ${isDarkMode ? 'text-[#f4f7f9]' : 'text-[#2d3436]'}`}>Cluster</label>
-              <select
-                value={filterCluster}
-                onChange={(e) => setFilterCluster(e.target.value)}
-                className={`w-full px-4 py-2.5 rounded-[12px] border font-['Nunito'] text-[16px] ${isDarkMode ? 'bg-[#10141a] border-[rgba(255,255,255,0.23)] text-[#f4f7f9]' : 'bg-white border-[rgba(0,0,0,0.23)] text-[#2d3436]'} focus:outline-none focus:border-[#ff6b6b] cursor-pointer`}
-              >
-                <option value="All">All Clusters</option>
+              <label className={`block font-['Nunito'] font-semibold text-[14px] mb-3 ${isDarkMode ? 'text-[#f4f7f9]' : 'text-[#2d3436]'}`}>Clusters</label>
+              <div className="space-y-2 max-h-[200px] overflow-y-auto">
                 {clusters.map((cluster) => (
-                  <option key={cluster} value={cluster}>
-                    {cluster}
-                  </option>
+                  <label key={cluster} className="flex items-center cursor-pointer gap-2">
+                    <input
+                      type="checkbox"
+                      checked={filterClusters.includes(cluster)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setFilterClusters([...filterClusters, cluster]);
+                        } else {
+                          setFilterClusters(filterClusters.filter(c => c !== cluster));
+                        }
+                      }}
+                      className={`w-4 h-4 rounded border-2 cursor-pointer ${filterClusters.includes(cluster) ? 'border-[#ff6b6b] bg-[#ff6b6b]' : isDarkMode ? 'border-[rgba(255,255,255,0.23)]' : 'border-[rgba(0,0,0,0.23)]'}`}
+                    />
+                    <span className={`font-['Nunito'] text-[14px] ${isDarkMode ? 'text-[#f4f7f9]' : 'text-[#2d3436]'}`}>{cluster}</span>
+                  </label>
                 ))}
-              </select>
+              </div>
             </div>
           </div>
         )}

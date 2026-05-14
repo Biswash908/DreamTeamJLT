@@ -19,7 +19,7 @@ export interface Cat {
     fileUrl?: string;
   }[];
   freeForAdoption?: boolean;
-  adoptionCluster?: string;
+  adoptionClusters?: string[];
   adoptionEmail?: string;
 }
 
@@ -53,7 +53,7 @@ export async function fetchCats(): Promise<Cat[]> {
   location: cat.location,
   spottedDate: cat.spotted_date,
   freeForAdoption: cat.free_for_adoption,
-  adoptionCluster: cat.adoption_cluster,
+      adoptionClusters: cat.adoption_clusters || [],
   adoptionEmail: cat.adoption_email,
     }));
   } catch (err) {
@@ -94,7 +94,7 @@ return (data || []).map((cat: any) => ({
   location: cat.location,
   spottedDate: cat.spotted_date,
   freeForAdoption: cat.free_for_adoption,
-  adoptionCluster: cat.adoption_cluster,
+      adoptionClusters: cat.adoption_clusters || [],
   adoptionEmail: cat.adoption_email,
 }));
   } catch (err) {

@@ -26,6 +26,20 @@ export function CatProfilePage() {
     }
   };
 
+  const formatClusters = (clusters?: string[], location?: string) => {
+    if (!location) return '';
+    if (!clusters || clusters.length === 0) return location;
+    
+    if (clusters.length === 1) {
+      return `${location}, ${clusters[0]}`;
+    } else if (clusters.length === 2) {
+      return `${location}, ${clusters[0]} and ${clusters[1]}`;
+    } else {
+      const allButLast = clusters.slice(0, -1).join(', ');
+      return `${location}, ${allButLast} and ${clusters[clusters.length - 1]}`;
+    }
+  };
+
   const fetchBills = async (catId: string) => {
     try {
       console.log('[v0] Fetching bills for cat:', catId);
@@ -253,9 +267,7 @@ Best regards`;
                       Location
                     </div>
                     <div className={`font-['Nunito:Medium',sans-serif] font-medium text-[16px] ${isDarkMode ? 'text-[#f4f7f9]' : 'text-[#2d3436]'}`}>
-                      {currentCat.location && currentCat.adoptionCluster 
-                        ? `${currentCat.location}, ${currentCat.adoptionCluster}` 
-                        : currentCat.location}
+                      {formatClusters(currentCat.adoptionClusters, currentCat.location)}
                     </div>
                   </div>
                 </div>
