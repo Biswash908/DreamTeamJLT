@@ -16,6 +16,7 @@ export interface Cat {
     amount: string;
     date: string;
     paid: boolean;
+    fileUrl?: string;
   }[];
   freeForAdoption?: boolean;
   adoptionCluster?: string;

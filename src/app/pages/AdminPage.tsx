@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Header } from '../components/Header';
 import { useDarkMode } from '../context/DarkModeContext';
 import { Cat, cats as initialCats, homedCats as initialHomedCats } from '../data/cats';
-import { Plus, Edit2, Trash2, Save, X, DollarSign, Heart, Sliders, Upload } from 'lucide-react';
+import { Plus, Edit2, Trash2, Save, X, DollarSign, Heart, Sliders, Upload, FileUp, Trash } from 'lucide-react';
 import { useClusters } from '../../hooks/useClusters';
 import { supabase } from '../lib/supabaseClient';
 import { fetchCats } from '../data/cats';
@@ -22,6 +22,7 @@ export function AdminPage() {
   const [sortByCluster, setSortByCluster] = useState('All');
   const [showSortModal, setShowSortModal] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [isUploadingVetBill, setIsUploadingVetBill] = useState(false);
 
   const clustersList = ['Cluster A', 'Cluster B', 'Cluster C', 'Cluster D', 'Cluster E', 'Cluster F', 'Cluster G', 'Cluster H', 'Cluster I', 'Cluster J', 'Cluster K', 'Cluster L', 'Cluster M', 'Cluster N', 'Cluster O', 'Cluster P', 'Cluster Q', 'Cluster R', 'Cluster S', 'Cluster T', 'Cluster U', 'Cluster V', 'Cluster W', 'Cluster X', 'Cluster Y', 'Cluster Z', 'Cluster Central Park'];
 
@@ -85,6 +86,57 @@ useEffect(() => {
               console.error(`[v0] Insert data was:`, insertData);
             } else {
               console.log(`[v0] Successfully saved cat ${cat.name} to Supabase`);
+            }
+
+            // Save bills for this cat
+            console.log(`[v0] Processing bills for cat ${cat.id}:`, cat.vetBills);
+            if (cat.vetBills && cat.vetBills.length > 0) {
+              console.log(`[v0] Found ${cat.vetBills.length} bills to save`);
+              
+              // Delete existing bills for this cat
+              const { error: deleteBillError } = await supabase
+                .from('bills')
+                .delete()
+                .eq('cat_id', cat.id);
+
+              if (deleteBillError) {
+                console.warn(`[v0] Error deleting existing bills for cat ${cat.id}:`, deleteBillError);
+              } else {
+                console.log(`[v0] Successfully deleted existing bills for cat ${cat.id}`);
+              }
+
+              // Insert new bills (all bills are marked as paid by default)
+              const billsData = cat.vetBills.map(bill => ({
+                cat_id: cat.id,
+                description: bill.description,
+                amount: bill.amount || null,
+                date: bill.date,
+                paid: true,
+                file_url: bill.fileUrl || null
+              }));
+
+              console.log(`[v0] Bills data to insert:`, billsData);
+
+              const { error: billInsertError } = await supabase
+                .from('bills')
+                .insert(billsData);
+
+              if (billInsertError) {
+                console.error(`[v0] Error saving bills for cat ${cat.id}:`, billInsertError);
+              } else {
+                console.log(`[v0] Successfully saved ${billsData.length} bills for cat ${cat.name}`);
+              }
+            } else {
+              console.log(`[v0] No bills to save for cat ${cat.id}`);
+              // Delete all bills if cat has none
+              const { error: deleteBillError } = await supabase
+                .from('bills')
+                .delete()
+                .eq('cat_id', cat.id);
+
+              if (deleteBillError && deleteBillError.code !== 'PGRST116') {
+                console.warn(`[v0] Error deleting bills for cat ${cat.id}:`, deleteBillError);
+              }
             }
           }
         }
@@ -203,6 +255,78 @@ useEffect(() => {
       alert('Failed to upload image');
     } finally {
       setIsUploadingImage(false);
+    }
+  };
+
+  const fetchExistingBills = async (catId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('bills')
+        .select('*')
+        .eq('cat_id', catId);
+
+      if (error) {
+        console.warn('[v0] Error fetching bills:', error);
+        return [];
+      }
+
+      // Convert database format to form format
+      return (data || []).map(bill => ({
+        description: bill.description,
+        amount: bill.amount || '',
+        date: bill.date,
+        paid: true, // All bills are marked as paid in DB
+        fileUrl: bill.file_url || ''
+      }));
+    } catch (err) {
+      console.error('[v0] Exception fetching bills:', err);
+      return [];
+    }
+  };
+
+  const handleVetBillFileUpload = async (file: File, billIndex: number) => {
+    if (!file || !editingCat) return;
+
+    try {
+      console.log(`[v0] Starting vet bill file upload for bill #${billIndex}:`, file.name);
+      
+      // Create a unique filename with timestamp
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${editingCat.id}-bill-${billIndex}-${Date.now()}.${fileExt}`;
+      const filePath = `vet-bills/${fileName}`;
+
+      console.log(`[v0] Uploading to path:`, filePath);
+
+      // Upload to Supabase Storage
+      const { data, error } = await supabase.storage
+        .from('dreamteam-cats')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (error) {
+        console.error(`[v0] Upload error:`, error);
+        alert(`Upload failed: ${error.message}`);
+        return;
+      }
+
+      console.log(`[v0] File uploaded successfully`, data);
+
+      // Get the public URL
+      const { data: publicUrlData } = supabase.storage
+        .from('dreamteam-cats')
+        .getPublicUrl(filePath);
+
+      if (publicUrlData) {
+        console.log(`[v0] Public URL:`, publicUrlData.publicUrl);
+        const newBills = [...(editingCat.vetBills || [])];
+        newBills[billIndex] = { ...newBills[billIndex], fileUrl: publicUrlData.publicUrl };
+        setEditingCat({ ...editingCat, vetBills: newBills });
+      }
+    } catch (error) {
+      console.error('[v0] Vet bill upload error:', error);
+      alert('Failed to upload vet bill');
     }
   };
 
@@ -596,6 +720,162 @@ useEffect(() => {
                   </div>
                 </div>
 
+                {/* Veterinary Bills */}
+                <div className={`border-t pt-4 ${isDarkMode ? 'border-[rgba(255,255,255,0.1)]' : 'border-[rgba(0,0,0,0.1)]'}`}>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className={`font-['Fredoka'] font-semibold text-[16px] ${isDarkMode ? 'text-[#f4f7f9]' : 'text-[#2d3436]'}`} style={{ fontVariationSettings: "'wdth' 100" }}>
+                      Veterinary Bills
+                    </h3>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!editingCat.vetBills) {
+                          setEditingCat({ ...editingCat, vetBills: [] });
+                        }
+                        setEditingCat({
+                          ...editingCat,
+                          vetBills: [
+                            ...(editingCat.vetBills || []),
+                            { description: '', amount: '', date: '', paid: true, fileUrl: '' }
+                          ]
+                        });
+                      }}
+                      className="bg-[#4ecdc4] hover:bg-[#3db8b0] text-white rounded-[12px] px-4 py-2 flex items-center gap-2 font-['Nunito'] font-semibold text-[14px] transition-colors"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Add Bill
+                    </button>
+                  </div>
+
+                  {editingCat.vetBills && editingCat.vetBills.length > 0 ? (
+                    <div className="space-y-4">
+                      {editingCat.vetBills.map((bill, billIndex) => (
+                        <div key={billIndex} className={`p-4 rounded-[12px] border ${isDarkMode ? 'bg-[#0f141a] border-[rgba(255,255,255,0.1)]' : 'bg-[#f8f9fa] border-[rgba(0,0,0,0.1)]'}`}>
+                          <div className="flex justify-between items-center mb-3">
+                            <span className={`font-['Nunito'] font-semibold text-[14px] ${isDarkMode ? 'text-[#b5c0c8]' : 'text-[#636e72]'}`}>
+                              Bill #{billIndex + 1}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditingCat({
+                                  ...editingCat,
+                                  vetBills: editingCat.vetBills?.filter((_, i) => i !== billIndex) || []
+                                });
+                              }}
+                              className="text-[#ff6b6b] hover:bg-[#ff6b6b]/10 p-2 rounded-[8px] transition-colors"
+                            >
+                              <Trash className="w-4 h-4" />
+                            </button>
+                          </div>
+
+                          <div className="space-y-3">
+                            {/* Title/Description */}
+                            <div>
+                              <label className={`block font-['Nunito'] font-semibold text-[12px] mb-1 ${isDarkMode ? 'text-[#f4f7f9]' : 'text-[#2d3436]'}`}>Treatment/Title *</label>
+                              <input
+                                type="text"
+                                value={bill.description}
+                                onChange={(e) => {
+                                  const newBills = [...(editingCat.vetBills || [])];
+                                  newBills[billIndex] = { ...bill, description: e.target.value };
+                                  setEditingCat({ ...editingCat, vetBills: newBills });
+                                }}
+                                placeholder="e.g., Dental extraction"
+                                className={`w-full px-3 py-2 rounded-[8px] border font-['Nunito'] text-[14px] ${isDarkMode ? 'bg-[#10141a] border-[rgba(255,255,255,0.23)] text-[#f4f7f9]' : 'bg-white border-[rgba(0,0,0,0.23)] text-[#2d3436]'} focus:outline-none focus:border-[#4ecdc4]`}
+                              />
+                            </div>
+
+                            {/* Date */}
+                            <div>
+                              <label className={`block font-['Nunito'] font-semibold text-[12px] mb-1 ${isDarkMode ? 'text-[#f4f7f9]' : 'text-[#2d3436]'}`}>Date *</label>
+                              <input
+                                type="date"
+                                value={bill.date}
+                                onChange={(e) => {
+                                  const newBills = [...(editingCat.vetBills || [])];
+                                  newBills[billIndex] = { ...bill, date: e.target.value };
+                                  setEditingCat({ ...editingCat, vetBills: newBills });
+                                }}
+                                className={`w-full px-3 py-2 rounded-[8px] border font-['Nunito'] text-[14px] ${isDarkMode ? 'bg-[#10141a] border-[rgba(255,255,255,0.23)] text-[#f4f7f9]' : 'bg-white border-[rgba(0,0,0,0.23)] text-[#2d3436]'} focus:outline-none focus:border-[#4ecdc4]`}
+                              />
+                            </div>
+
+                            {/* Amount (Optional) */}
+                            <div>
+                              <label className={`block font-['Nunito'] font-semibold text-[12px] mb-1 ${isDarkMode ? 'text-[#f4f7f9]' : 'text-[#2d3436]'}`}>Amount (Optional)</label>
+                              <div className="flex items-center gap-2">
+                                <span className={`font-['Nunito'] font-semibold text-[14px] ${isDarkMode ? 'text-[#f4f7f9]' : 'text-[#2d3436]'}`}>AED</span>
+                                <input
+                                  type="text"
+                                  value={bill.amount}
+                                  onChange={(e) => {
+                                    const newBills = [...(editingCat.vetBills || [])];
+                                    newBills[billIndex] = { ...bill, amount: e.target.value };
+                                    setEditingCat({ ...editingCat, vetBills: newBills });
+                                  }}
+                                  placeholder="e.g., 500"
+                                  className={`flex-1 px-3 py-2 rounded-[8px] border font-['Nunito'] text-[14px] ${isDarkMode ? 'bg-[#10141a] border-[rgba(255,255,255,0.23)] text-[#f4f7f9]' : 'bg-white border-[rgba(0,0,0,0.23)] text-[#2d3436]'} focus:outline-none focus:border-[#4ecdc4]`}
+                                />
+                              </div>
+                            </div>
+
+                            {/* File Upload (Optional) */}
+                            <div>
+                              <label className={`block font-['Nunito'] font-semibold text-[12px] mb-2 ${isDarkMode ? 'text-[#f4f7f9]' : 'text-[#2d3436]'}`}>Upload Receipt/Invoice (Optional)</label>
+                              {bill.fileUrl && (
+                                <div className="mb-2 p-2 rounded-[8px] bg-[#4ecdc4]/10 flex items-center justify-between">
+                                  <span className={`font-['Nunito'] text-[12px] ${isDarkMode ? 'text-[#4ecdc4]' : 'text-[#4ecdc4]'}`}>File uploaded ✓</span>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const newBills = [...(editingCat.vetBills || [])];
+                                      newBills[billIndex] = { ...bill, fileUrl: '' };
+                                      setEditingCat({ ...editingCat, vetBills: newBills });
+                                    }}
+                                    className="text-[#ff6b6b] hover:text-[#ff5252]"
+                                  >
+                                    <X className="w-3 h-3" />
+                                  </button>
+                                </div>
+                              )}
+                              <label className={`flex items-center justify-center w-full px-3 py-3 rounded-[8px] border-2 border-dashed cursor-pointer transition-colors ${
+                                isDarkMode
+                                  ? 'bg-[#10141a] border-[#4ecdc4]/50 hover:border-[#4ecdc4]'
+                                  : 'bg-[#f8f9fa] border-[#4ecdc4]/50 hover:border-[#4ecdc4]'
+                              }`}>
+                                <input
+                                  type="file"
+                                  accept=".pdf,.png,.jpg,.jpeg"
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) {
+                                      handleVetBillFileUpload(file, billIndex);
+                                    }
+                                  }}
+                                  className="hidden"
+                                />
+                                <div className="text-center">
+                                  <FileUp className={`w-4 h-4 mx-auto mb-1 ${isDarkMode ? 'text-[#4ecdc4]' : 'text-[#4ecdc4]'}`} />
+                                  <p className={`font-['Nunito'] text-[12px] ${isDarkMode ? 'text-[#b5c0c8]' : 'text-[#636e72]'}`}>
+                                    PDF, PNG, JPG
+                                  </p>
+                                </div>
+                              </label>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className={`p-4 rounded-[12px] text-center ${isDarkMode ? 'bg-[#0f141a] border border-[rgba(255,255,255,0.1)]' : 'bg-[#f8f9fa] border border-[rgba(0,0,0,0.1)]'}`}>
+                      <p className={`font-['Nunito'] text-[14px] ${isDarkMode ? 'text-[#b5c0c8]' : 'text-[#636e72]'}`}>
+                        No vet bills added yet
+                      </p>
+                    </div>
+                  )}
+                </div>
+
                 {/* Action Buttons */}
                 <div className="flex gap-3 pt-4">
                   <button
@@ -708,8 +988,10 @@ useEffect(() => {
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-center gap-2">
                         <button
-                          onClick={() => {
-                            setEditingCat(cat);
+                          onClick={async () => {
+                            // Load existing bills when editing
+                            const existingBills = await fetchExistingBills(cat.id);
+                            setEditingCat({ ...cat, vetBills: existingBills });
                             setIsAddingNew(false);
                           }}
                           className={`p-2 rounded-[8px] ${isDarkMode ? 'hover:bg-[rgba(255,255,255,0.1)]' : 'hover:bg-[rgba(0,0,0,0.05)]'} transition-colors`}
