@@ -53,15 +53,6 @@ useEffect(() => {
         for (let i = 0; i < updatedCats.length; i += batchSize) {
           const batch = updatedCats.slice(i, i + batchSize);
           for (const cat of batch) {
-            const { error: deleteError } = await supabase
-              .from('cats')
-              .delete()
-              .eq('id', cat.id);
-            
-            if (deleteError && deleteError.code !== 'PGRST116') {
-              console.warn(`Error deleting cat ${cat.id}:`, deleteError);
-            }
-
             const insertData = {
               id: cat.id,
               name: cat.name,
@@ -81,7 +72,7 @@ useEffect(() => {
 
             const { error: insertError } = await supabase
               .from('cats')
-              .insert(insertData);
+              .upsert(insertData);
 
             if (insertError) {
               console.error(`[v0] Error saving cat ${cat.id}:`, insertError);
@@ -92,7 +83,9 @@ useEffect(() => {
 
             // Save bills for this cat
             console.log(`[v0] Processing bills for cat ${cat.id}:`, cat.vetBills);
-            if (cat.vetBills && cat.vetBills.length > 0) {
+            if (cat.vetBills === undefined) {
+              console.log(`[v0] Skipping bills update for cat ${cat.id} because vetBills is undefined`);
+            } else if (cat.vetBills.length > 0) {
               console.log(`[v0] Found ${cat.vetBills.length} bills to save`);
               
               // Delete existing bills for this cat
@@ -107,7 +100,7 @@ useEffect(() => {
                 console.log(`[v0] Successfully deleted existing bills for cat ${cat.id}`);
               }
 
-              // Insert new bills (all bills are marked as paid by default)
+              // Insert new bills
               const billsData = cat.vetBills.map(bill => ({
                 cat_id: cat.id,
                 description: bill.description,
@@ -130,7 +123,7 @@ useEffect(() => {
               }
             } else {
               console.log(`[v0] No bills to save for cat ${cat.id}`);
-              // Delete all bills if cat has none
+              // Delete all bills if cat has an explicit empty bill list
               const { error: deleteBillError } = await supabase
                 .from('bills')
                 .delete()
