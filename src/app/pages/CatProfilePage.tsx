@@ -189,23 +189,6 @@ export function CatProfilePage() {
     }
   };
 
-  const formatClusters = (clusters?: string[], location?: string) => {
-    if (!location) return '';
-    if (!clusters || clusters.length === 0) return location;
-    
-    let clusterString = '';
-    if (clusters.length === 1) {
-      clusterString = clusters[0];
-    } else if (clusters.length === 2) {
-      clusterString = `${clusters[0]} and ${clusters[1]}`;
-    } else {
-      const allButLast = clusters.slice(0, -1).join(', ');
-      clusterString = `${allButLast} and ${clusters[clusters.length - 1]}`;
-    }
-    
-    return `${location} (${clusterString})`;
-  };
-
   const fetchBills = async (catId: string) => {
     try {
       console.log('[v0] Fetching bills for cat:', catId);
@@ -410,6 +393,11 @@ Best regards`;
                       <span className="font-['Nunito:SemiBold',sans-serif] text-black text-[13px]">Adoptable</span>
                     </div>
                   )}
+                  {currentCat.adoptionClusters && currentCat.adoptionClusters.length > 0 && currentCat.adoptionClusters.map((cluster) => (
+                    <div key={cluster} className="border border-[rgba(78,205,196,0.7)] rounded-[16px] px-[11px] py-[6px]">
+                      <span className="font-['Nunito:Regular',sans-serif] text-[#4ecdc4] text-[13px]">{cluster}</span>
+                    </div>
+                  ))}
                 </div>
 
                 {/* Description */}
@@ -438,7 +426,7 @@ Best regards`;
                       Location
                     </div>
                     <div className={`font-['Nunito:Medium',sans-serif] font-medium text-[16px] ${isDarkMode ? 'text-[#f4f7f9]' : 'text-[#2d3436]'}`}>
-                      {formatClusters(currentCat.adoptionClusters, currentCat.location)}
+                      {currentCat.location}
                     </div>
                   </div>
                 </div>
