@@ -303,7 +303,25 @@ Best regards`;
                       fontVariationSettings: "'wdth' 100"
                     }}
                   >
-                    <span className="text-lg">🐾</span>
+                                        <span className="text-lg">
+                      <div className="w-5 h-5">
+                      <svg viewBox="0 0 24 24" fill="rgba(0,0,0,0.87)" xmlns="http://www.w3.org/2000/svg">
+  <ellipse cx="5.5" cy="10.5" rx="2.2" ry="3" transform="rotate(-15 5.5 10.5)" />
+  <ellipse cx="9.5" cy="6.5" rx="2.2" ry="3.2" />
+  <ellipse cx="14.5" cy="6.5" rx="2.2" ry="3.2" />
+  <ellipse cx="18.5" cy="10.5" rx="2.2" ry="3" transform="rotate(15 18.5 10.5)" />
+  
+  <path d="M12 12.5
+           c-3.5 0-6 2-6.5 5
+           s1 4.5 3 4.5
+           c1.5 0 2.5-1 3.5-1
+           s2 1 3.5 1
+           c2 0 3.5-1.5 3-4.5
+           s-3-5-6.5-5z" />
+</svg>
+
+                    </div>
+                    </span>
                     <span>I'm Interested!</span>
                   </button>
                 </div>
