@@ -2,15 +2,80 @@ import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router';
 import { Header } from '../components/Header';
 import { cats, homedCats, fetchCats, Cat } from '../data/cats';
-import { ChevronLeft, ChevronRight, MapPin, Check, Heart, Home, FileText, Download, AlertCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, MapPin, Check, Heart, Home, FileText, Download, AlertCircle, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { useDarkMode } from '../context/DarkModeContext';
 import { supabase } from '../lib/supabaseClient';
+
+// Help Modal Component
+function HelpModal({ bill, isDarkMode, onClose }: { bill: any; isDarkMode: boolean; onClose: () => void }) {
+  const navigate = useNavigate();
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-6">
+      <div className={`${isDarkMode ? 'bg-[#1a2028]' : 'bg-white'} rounded-[24px] p-8 max-w-[600px] w-full max-h-[90vh] overflow-y-auto shadow-2xl`}>
+        <div className="flex items-start justify-between mb-6">
+          <h2 className={`font-['Fredoka'] font-bold text-[24px] ${isDarkMode ? 'text-[#f4f7f9]' : 'text-[#2d3436]'}`} style={{ fontVariationSettings: "'wdth' 100" }}>
+            Help Support {bill.description}
+          </h2>
+          <button
+            onClick={onClose}
+            className={`p-2 rounded-[12px] ${isDarkMode ? 'hover:bg-[rgba(255,255,255,0.1)]' : 'hover:bg-[rgba(0,0,0,0.05)]'} transition-colors`}
+          >
+            <X className="w-6 h-6" />
+          </button>
+        </div>
+
+        <p className={`font-['Nunito'] text-[16px] mb-6 ${isDarkMode ? 'text-[#b5c0c8]' : 'text-[#636e72]'}`}>
+          Thank you for wanting to help! Your contributions make a real difference in the lives of our community cats.
+        </p>
+
+        <div className="mb-8">
+          <h3 className={`font-['Fredoka'] font-semibold text-[18px] mb-4 ${isDarkMode ? 'text-[#f4f7f9]' : 'text-[#2d3436]'}`} style={{ fontVariationSettings: "'wdth' 100" }}>
+            Ways to Contribute:
+          </h3>
+          <div className={`rounded-[16px] p-6 ${isDarkMode ? 'bg-[rgba(78,205,196,0.06)] border border-[rgba(78,205,196,0.2)]' : 'bg-[rgba(78,205,196,0.08)] border border-[rgba(78,205,196,0.3)]'}`}>
+            <p className={`font-['Nunito'] text-[16px] mb-4 ${isDarkMode ? 'text-[#b5c0c8]' : 'text-[#636e72]'}`}>
+              Prefer the full details? Visit our Donate page for payment info, reference text, and other ways to help.
+            </p>
+            <button
+              onClick={() => {
+                navigate('/donate');
+                onClose();
+              }}
+              className="bg-[#2e7d32] hover:bg-[#248a3d] text-white rounded-[12px] px-6 py-3 flex items-center gap-2 font-['Fredoka'] font-semibold text-[16px] transition-colors"
+              style={{ fontVariationSettings: "'wdth' 100" }}
+            >
+              Go to Donate
+            </button>
+          </div>
+        </div>
+
+        <div className="mb-6">
+          <h3 className={`font-['Fredoka'] font-semibold text-[18px] mb-4 ${isDarkMode ? 'text-[#f4f7f9]' : 'text-[#2d3436]'}`} style={{ fontVariationSettings: "'wdth' 100" }}>
+            Contact Us:
+          </h3>
+          <p className={`font-['Nunito'] text-[16px] mb-2 ${isDarkMode ? 'text-[#b5c0c8]' : 'text-[#636e72]'}`}>
+            Email: <a href="mailto:JLTCATSEMAIL@gmail.com" className="text-[#4ecdc4] hover:underline">JLTCATSEMAIL@gmail.com</a>
+          </p>
+          <p className={`font-['Nunito'] text-[16px] ${isDarkMode ? 'text-[#b5c0c8]' : 'text-[#636e72]'}`}>
+            Location: JLT, Dubai, UAE
+          </p>
+        </div>
+
+        <p className={`font-['Nunito'] italic text-[14px] ${isDarkMode ? 'text-[#7a9f93]' : 'text-[#636e72]'}`}>
+          Every contribution, no matter the size, helps us provide food, medical care, and love to cats in need.
+        </p>
+      </div>
+    </div>
+  );
+}
 
 // Bills Section Component
 function BillsSection({ bills, isDarkMode, formatDate }: { bills: any[]; isDarkMode: boolean; formatDate: (date: string) => string }) {
   const [showAllPaid, setShowAllPaid] = useState(false);
   const [showAllUnpaid, setShowAllUnpaid] = useState(false);
+  const [selectedBillForHelp, setSelectedBillForHelp] = useState<any | null>(null);
 
   const paidBills = bills.filter(bill => bill.paid);
   const unpaidBills = bills.filter(bill => !bill.paid);
@@ -25,6 +90,8 @@ function BillsSection({ bills, isDarkMode, formatDate }: { bills: any[]; isDarkM
 
   return (
     <div>
+      {selectedBillForHelp && <HelpModal bill={selectedBillForHelp} isDarkMode={isDarkMode} onClose={() => setSelectedBillForHelp(null)} />}
+
       <div className={`font-['Fredoka:SemiBold',sans-serif] font-semibold text-[20px] mb-[16px] ${isDarkMode ? 'text-[#f4f7f9]' : 'text-[#2d3436]'}`} style={{ fontVariationSettings: "'wdth' 100" }}>
         Veterinary Bills
       </div>
@@ -113,7 +180,13 @@ function BillsSection({ bills, isDarkMode, formatDate }: { bills: any[]; isDarkM
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-[12px] flex-shrink-0">
+                    <div className="flex items-center gap-[12px] flex-shrink-0 max-sm:flex-wrap">
+                      <button
+                        onClick={() => setSelectedBillForHelp(bill)}
+                        className="bg-[#2e7d32] hover:bg-[#248a3d] text-white rounded-[12px] px-3 py-2 flex items-center gap-1 font-['Nunito'] font-semibold text-[13px] transition-colors whitespace-nowrap"
+                      >
+                        Help
+                      </button>
                       {bill.file_url && (
                         <a
                           href={bill.file_url}
@@ -385,6 +458,12 @@ Best regards`;
                         <Check className={`w-[12px] h-[12px] text-[#2e7d32]`} />
                       </div>
                       <span className="font-['Nunito:SemiBold',sans-serif] text-white text-[13px]">TNR</span>
+                    </div>
+                  )}
+                  {bills.some(bill => !bill.paid) && (
+                    <div className="bg-[#ff6b6b] rounded-[16px] px-[12px] py-[6px] flex items-center gap-[6px]">
+                      <AlertCircle className="w-[16px] h-[16px] text-white" />
+                      <span className="font-['Nunito:SemiBold',sans-serif] text-white text-[13px]">Pending Vet Bills</span>
                     </div>
                   )}
                   {currentCat.freeForAdoption === true && (

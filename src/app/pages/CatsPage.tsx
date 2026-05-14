@@ -3,12 +3,14 @@ import { Link } from 'react-router';
 import { Header } from '../components/Header';
 import { useDarkMode } from '../context/DarkModeContext';
 import { cats, homedCats, fetchCats, Cat } from '../data/cats';
-import { ChevronDown, ChevronUp, Filter, Scissors } from 'lucide-react';
+import { ChevronDown, ChevronUp, Filter, Scissors, AlertCircle } from 'lucide-react';
+import { supabase } from '../lib/supabaseClient';
 
 export function CatsPage() {
   const { isDarkMode } = useDarkMode();
   const [allCats, setAllCats] = useState<Cat[]>([...cats, ...homedCats]);
   const [isLoading, setIsLoading] = useState(true);
+  const [catsWithPendingBills, setCatsWithPendingBills] = useState<Set<string>>(new Set());
 
   // Load from Supabase on mount, fallback to localStorage
   useEffect(() => {
@@ -46,6 +48,32 @@ export function CatsPage() {
 
     loadCats();
   }, []);
+
+  // Fetch pending bills for all cats
+  useEffect(() => {
+    const fetchPendingBills = async () => {
+      if (!supabase || allCats.length === 0) return;
+
+      try {
+        const { data, error } = await supabase
+          .from('bills')
+          .select('cat_id')
+          .eq('paid', false);
+
+        if (error) {
+          console.warn('[v0] Error fetching pending bills:', error);
+          return;
+        }
+
+        const catsWithBills = new Set(data?.map(bill => bill.cat_id) || []);
+        setCatsWithPendingBills(catsWithBills);
+      } catch (err) {
+        console.error('[v0] Exception fetching pending bills:', err);
+      }
+    };
+
+    fetchPendingBills();
+  }, [allCats]);
   const [searchQuery, setSearchQuery] = useState('');
   const [showStray, setShowStray] = useState(true);
   const [showHomed, setShowHomed] = useState(true);
@@ -228,6 +256,11 @@ export function CatsPage() {
                           <Scissors className="w-5 h-5 text-white" />
                         </div>
                       )}
+                      {catsWithPendingBills.has(cat.id) && (
+                        <div className="absolute top-3 right-3 bg-[#ff6b6b] rounded-full w-10 h-10 flex items-center justify-center shadow-md">
+                          <AlertCircle className="w-5 h-5 text-white" />
+                        </div>
+                      )}
                     </div>
 
                     {/* Cat Info */}
@@ -282,6 +315,11 @@ export function CatsPage() {
                           alt={cat.name}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         />
+                        {catsWithPendingBills.has(cat.id) && (
+                          <div className="absolute top-3 right-3 bg-[#ff6b6b] rounded-full w-10 h-10 flex items-center justify-center shadow-md">
+                            <AlertCircle className="w-5 h-5 text-white" />
+                          </div>
+                        )}
                       </div>
                       <div className="p-4">
                         <h3 className={`font-['Fredoka'] font-semibold text-[20px] mb-2 ${isDarkMode ? 'text-[#f4f7f9]' : 'text-[#2d3436]'}`} style={{ fontVariationSettings: "'wdth' 100" }}>

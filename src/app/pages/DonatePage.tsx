@@ -136,8 +136,8 @@ export function DonatePage() {
                         <div className="space-y-[7px]">
                           <div className="flex items-start gap-[8px]">
                             <span className={`font-['Nunito:Regular',sans-serif] text-[14px] ${isDarkMode ? 'text-[#b5c0c8]' : 'text-[#2d3436]'}`}>Email:</span>
-                            <a href="mailto:dreamteamcatsjlt@gmail.com" className={`font-['Nunito:Bold',sans-serif] text-[14px] underline decoration-[rgba(255,107,107,0.4)] ${isDarkMode ? 'text-[#f4f7f9]' : 'text-[#2d3436]'}`}>
-                              dreamteamcatsjlt@gmail.com
+                            <a href="mailto:JLTCATSEMAIL@gmail.com" className={`font-['Nunito:Bold',sans-serif] text-[14px] underline decoration-[rgba(255,107,107,0.4)] ${isDarkMode ? 'text-[#f4f7f9]' : 'text-[#2d3436]'}`}>
+                              JLTCATSEMAIL@gmail.com
                             </a>
                           </div>
                           
