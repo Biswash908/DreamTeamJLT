@@ -333,7 +333,9 @@ useEffect(() => {
       (sortByTNR === 'All' || (sortByTNR === 'Yes' ? cat.tnr : !cat.tnr)) &&
       (sortByStatus === 'All' || cat.status === sortByStatus) &&
       (sortByAdoption === 'All' || (sortByAdoption === 'Yes' ? cat.freeForAdoption : !cat.freeForAdoption)) &&
-      (sortByCluster === 'All' || (cat.adoptionClusters && cat.adoptionClusters.includes(sortByCluster)))
+      (sortByCluster === 'All' || (sortByCluster === 'No cluster'
+        ? (!cat.adoptionClusters || cat.adoptionClusters.length === 0) && cat.status !== 'Homed'
+        : (cat.adoptionClusters && cat.adoptionClusters.includes(sortByCluster))))
     )
     .sort((a, b) => {
       // Primary sort: by first cluster
@@ -493,6 +495,7 @@ useEffect(() => {
                     className={`w-full px-3 py-2 rounded-[8px] border font-['Nunito'] text-[14px] ${isDarkMode ? 'bg-[#10141a] border-[rgba(255,255,255,0.15)] text-[#f4f7f9]' : 'bg-gray-50 border-[rgba(0,0,0,0.1)] text-[#2d3436]'} focus:outline-none focus:border-[#4ecdc4] cursor-pointer`}
                   >
                     <option value="All">All Clusters</option>
+                    <option value="No cluster">No cluster</option>
                     {clustersList.map((cluster) => (
                       <option key={cluster} value={cluster}>
                         {cluster}
@@ -999,9 +1002,11 @@ useEffect(() => {
                       </div>
                     </td>
                     <td className={`px-6 py-4 font-['Nunito'] text-[14px] ${isDarkMode ? 'text-[#b5c0c8]' : 'text-[#636e72]'} max-w-[200px] truncate`}>
-                      {cat.adoptionClusters && cat.location 
-                        ? `${cat.adoptionClusters}, ${cat.location}` 
-                        : cat.location}
+                      {cat.status === 'Homed'
+                        ? 'Homed'
+                        : (cat.adoptionClusters && cat.adoptionClusters.length > 0
+                          ? cat.adoptionClusters.join(', ')
+                          : 'No cluster')}
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-center gap-2">

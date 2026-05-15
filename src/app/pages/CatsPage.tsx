@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router';
 import { Header } from '../components/Header';
 import { useDarkMode } from '../context/DarkModeContext';
@@ -19,6 +19,7 @@ type CatsPageState = {
   filterGender: 'All' | 'Male' | 'Female';
   filterClusters: string[];
   scrollY: number;
+  restoreOnMount?: boolean;
 };
 
 function loadCatsPageState(): CatsPageState | null {
@@ -28,6 +29,14 @@ function loadCatsPageState(): CatsPageState | null {
     return JSON.parse(raw) as CatsPageState;
   } catch {
     return null;
+  }
+}
+
+function clearCatsPageState() {
+  try {
+    sessionStorage.removeItem(CATS_PAGE_STATE_KEY);
+  } catch {
+    // ignore storage errors
   }
 }
 
@@ -45,6 +54,7 @@ function saveCatsPageState(state: Partial<CatsPageState>) {
       filterGender: state.filterGender ?? existing?.filterGender ?? 'All',
       filterClusters: state.filterClusters ?? existing?.filterClusters ?? [],
       scrollY: state.scrollY ?? existing?.scrollY ?? 0,
+      restoreOnMount: state.restoreOnMount ?? existing?.restoreOnMount,
     } as CatsPageState;
     sessionStorage.setItem(CATS_PAGE_STATE_KEY, JSON.stringify(nextState));
   } catch {
@@ -53,12 +63,13 @@ function saveCatsPageState(state: Partial<CatsPageState>) {
 }
 
 export function CatsPage() {
-  const savedState = loadCatsPageState();
+  const savedState = useMemo(() => loadCatsPageState(), []);
+  const shouldRestore = savedState?.restoreOnMount === true;
   const { isDarkMode } = useDarkMode();
-  const [allCats, setAllCats] = useState<Cat[]>(savedState?.allCats?.length ? savedState.allCats : [...cats, ...homedCats]);
+  const [allCats, setAllCats] = useState<Cat[]>(shouldRestore && savedState?.allCats?.length ? savedState.allCats : [...cats, ...homedCats]);
   const [isLoading, setIsLoading] = useState(true);
   const [catsWithPendingBills, setCatsWithPendingBills] = useState<Set<string>>(new Set());
-  const [scrollY, setScrollY] = useState<number>(savedState?.scrollY ?? 0);
+  const [scrollY, setScrollY] = useState<number>(shouldRestore ? savedState?.scrollY ?? 0 : 0);
 
   // Load from Supabase on mount, fallback to localStorage
   useEffect(() => {
@@ -122,16 +133,49 @@ export function CatsPage() {
 
     fetchPendingBills();
   }, [allCats]);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [showStray, setShowStray] = useState(true);
-  const [showHomed, setShowHomed] = useState(true);
-  const [showFilters, setShowFilters] = useState(false);
-  const [filterTNR, setFilterTNR] = useState(false);
-  const [filterAdoptable, setFilterAdoptable] = useState(false);
-  const [filterGender, setFilterGender] = useState<'All' | 'Male' | 'Female'>('All');
-  const [filterClusters, setFilterClusters] = useState<string[]>([]);
+  const [searchQuery, setSearchQuery] = useState(shouldRestore ? savedState?.searchQuery ?? '' : '');
+  const [showStray, setShowStray] = useState(shouldRestore ? savedState?.showStray ?? true : true);
+  const [showHomed, setShowHomed] = useState(shouldRestore ? savedState?.showHomed ?? true : true);
+  const [showFilters, setShowFilters] = useState(shouldRestore ? savedState?.showFilters ?? false : false);
+  const [filterTNR, setFilterTNR] = useState(shouldRestore ? savedState?.filterTNR ?? false : false);
+  const [filterAdoptable, setFilterAdoptable] = useState(shouldRestore ? savedState?.filterAdoptable ?? false : false);
+  const [filterGender, setFilterGender] = useState<'All' | 'Male' | 'Female'>(shouldRestore ? savedState?.filterGender ?? 'All' : 'All');
+  const [filterClusters, setFilterClusters] = useState<string[]>(shouldRestore ? savedState?.filterClusters ?? [] : []);
 
-  const clusters = ['Cluster A', 'Cluster B', 'Cluster C', 'Cluster D', 'Cluster E', 'Cluster F', 'Cluster G', 'Cluster H', 'Cluster I', 'Cluster J', 'Cluster K', 'Cluster L', 'Cluster M', 'Cluster N', 'Cluster O', 'Cluster P', 'Cluster Q', 'Cluster R', 'Cluster S', 'Cluster T', 'Cluster U', 'Cluster V', 'Cluster W', 'Cluster X', 'Cluster Y', 'Cluster Z', 'Cluster Central Park'];
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrollY(window.scrollY);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  useEffect(() => {
+    saveCatsPageState({
+      allCats,
+      searchQuery,
+      showStray,
+      showHomed,
+      showFilters,
+      filterTNR,
+      filterAdoptable,
+      filterGender,
+      filterClusters,
+      scrollY,
+    });
+  }, [allCats, searchQuery, showStray, showHomed, showFilters, filterTNR, filterAdoptable, filterGender, filterClusters, scrollY]);
+
+  useEffect(() => {
+    if (savedState?.restoreOnMount) {
+      window.requestAnimationFrame(() => window.scrollTo(0, savedState.scrollY));
+    }
+    if (savedState) {
+      clearCatsPageState();
+    }
+  }, [savedState]);
+
+  const clusters = ['Cluster A', 'Cluster B', 'Cluster C', 'Cluster D', 'Cluster E', 'Cluster F', 'Cluster G', 'Cluster H', 'Cluster I', 'Cluster J', 'Cluster K', 'Cluster L', 'Cluster M', 'Cluster N', 'Cluster O', 'Cluster P', 'Cluster Q', 'Cluster R', 'Cluster S', 'Cluster T', 'Cluster U', 'Cluster V', 'Cluster W', 'Cluster X', 'Cluster Y', 'Cluster Z', 'Cluster Central Park', 'No cluster'];
   
   const filteredCats = allCats.filter(cat => {
     // Filter by status (Stray/Homed)
@@ -152,7 +196,13 @@ export function CatsPage() {
     const matchesGender = filterGender === 'All' || cat.gender === filterGender;
 
     // Filter by clusters (multiple selection)
-    const matchesCluster = filterClusters.length === 0 || (cat.adoptionClusters && cat.adoptionClusters.some(cluster => filterClusters.includes(cluster)));
+    const hasClusters = (cat.adoptionClusters?.length ?? 0) > 0;
+    const matchesCluster = filterClusters.length === 0 || filterClusters.some(cluster => {
+      if (cluster === 'No cluster') {
+        return !hasClusters && cat.status !== 'Homed';
+      }
+      return hasClusters && cat.adoptionClusters?.some(c => c === cluster);
+    });
 
     return matchesSearch && matchesTNR && matchesAdoptable && matchesGender && matchesCluster;
   });
@@ -290,7 +340,24 @@ export function CatsPage() {
           {showStray && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {strayCats.map((cat) => (
-                <Link key={cat.id} to={`/cat/${cat.id}`} className="no-underline group">
+                <Link
+                  key={cat.id}
+                  to={`/cat/${cat.id}`}
+                  className="no-underline group"
+                  onClick={() => saveCatsPageState({
+                    allCats,
+                    searchQuery,
+                    showStray,
+                    showHomed,
+                    showFilters,
+                    filterTNR,
+                    filterAdoptable,
+                    filterGender,
+                    filterClusters,
+                    scrollY,
+                    restoreOnMount: true,
+                  })}
+                >
                   <div className={`rounded-[24px] overflow-hidden hover:-translate-y-3 transition-all duration-300 ${isDarkMode ? 'bg-[#1a2028]' : 'bg-white'} shadow-lg`}>
                     {/* Cat Image */}
                     <div className="relative aspect-square overflow-hidden">
@@ -355,7 +422,24 @@ export function CatsPage() {
             {showHomed && (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {homed.map((cat) => (
-                  <Link key={cat.id} to={`/cat/${cat.id}`} className="no-underline group">
+                  <Link
+                    key={cat.id}
+                    to={`/cat/${cat.id}`}
+                    className="no-underline group"
+                    onClick={() => saveCatsPageState({
+                      allCats,
+                      searchQuery,
+                      showStray,
+                      showHomed,
+                      showFilters,
+                      filterTNR,
+                      filterAdoptable,
+                      filterGender,
+                      filterClusters,
+                      scrollY,
+                      restoreOnMount: true,
+                    })}
+                  >
                     <div className={`rounded-[24px] overflow-hidden hover:-translate-y-3 transition-all duration-300 ${isDarkMode ? 'bg-[#1a2028]' : 'bg-white'} shadow-lg`}>
                       <div className="relative aspect-square overflow-hidden">
                         <img 
