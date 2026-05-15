@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router';
 import { Header } from '../components/Header';
 import { useDarkMode } from '../context/DarkModeContext';
@@ -6,11 +6,59 @@ import { cats, homedCats, fetchCats, Cat } from '../data/cats';
 import { ChevronDown, ChevronUp, Filter, Scissors, AlertCircle } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 
+const CATS_PAGE_STATE_KEY = 'catsPageState';
+
+type CatsPageState = {
+  allCats: Cat[];
+  searchQuery: string;
+  showStray: boolean;
+  showHomed: boolean;
+  showFilters: boolean;
+  filterTNR: boolean;
+  filterAdoptable: boolean;
+  filterGender: 'All' | 'Male' | 'Female';
+  filterClusters: string[];
+  scrollY: number;
+};
+
+function loadCatsPageState(): CatsPageState | null {
+  try {
+    const raw = sessionStorage.getItem(CATS_PAGE_STATE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as CatsPageState;
+  } catch {
+    return null;
+  }
+}
+
+function saveCatsPageState(state: Partial<CatsPageState>) {
+  try {
+    const existing = loadCatsPageState();
+    const nextState = {
+      allCats: [...(state.allCats ?? existing?.allCats ?? [...cats, ...homedCats])],
+      searchQuery: state.searchQuery ?? existing?.searchQuery ?? '',
+      showStray: state.showStray ?? existing?.showStray ?? true,
+      showHomed: state.showHomed ?? existing?.showHomed ?? true,
+      showFilters: state.showFilters ?? existing?.showFilters ?? false,
+      filterTNR: state.filterTNR ?? existing?.filterTNR ?? false,
+      filterAdoptable: state.filterAdoptable ?? existing?.filterAdoptable ?? false,
+      filterGender: state.filterGender ?? existing?.filterGender ?? 'All',
+      filterClusters: state.filterClusters ?? existing?.filterClusters ?? [],
+      scrollY: state.scrollY ?? existing?.scrollY ?? 0,
+    } as CatsPageState;
+    sessionStorage.setItem(CATS_PAGE_STATE_KEY, JSON.stringify(nextState));
+  } catch {
+    // ignore storage errors
+  }
+}
+
 export function CatsPage() {
+  const savedState = loadCatsPageState();
   const { isDarkMode } = useDarkMode();
-  const [allCats, setAllCats] = useState<Cat[]>([...cats, ...homedCats]);
+  const [allCats, setAllCats] = useState<Cat[]>(savedState?.allCats?.length ? savedState.allCats : [...cats, ...homedCats]);
   const [isLoading, setIsLoading] = useState(true);
   const [catsWithPendingBills, setCatsWithPendingBills] = useState<Set<string>>(new Set());
+  const [scrollY, setScrollY] = useState<number>(savedState?.scrollY ?? 0);
 
   // Load from Supabase on mount, fallback to localStorage
   useEffect(() => {
