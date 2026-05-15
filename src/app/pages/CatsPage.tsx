@@ -315,6 +315,11 @@ export function CatsPage() {
                           alt={cat.name}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         />
+                        {cat.tnr && (
+                          <div className="absolute top-3 left-3 bg-[#2e7d32] rounded-full w-10 h-10 flex items-center justify-center shadow-md">
+                            <Scissors className="w-5 h-5 text-white" />
+                          </div>
+                        )}
                         {catsWithPendingBills.has(cat.id) && (
                           <div className="absolute top-3 right-3 bg-[#ff6b6b] rounded-full w-10 h-10 flex items-center justify-center shadow-md">
                             <AlertCircle className="w-5 h-5 text-white" />

@@ -496,16 +496,22 @@ Best regards`;
                 )}
               </div>
 
-              {/* Location */}
-              <div className={`rounded-[16px] p-[24px] mb-[24px] ${isDarkMode ? 'bg-[rgba(78,205,196,0.06)]' : 'bg-[rgba(78,205,196,0.08)]'}`} style={{ boxShadow: isDarkMode ? '0px 2px 1px -1px rgba(0,0,0,0.4), 0px 1px 1px 0px rgba(0,0,0,0.28), 0px 1px 3px 0px rgba(0,0,0,0.24)' : '0px 2px 1px -1px rgba(0,0,0,0.2), 0px 1px 1px 0px rgba(0,0,0,0.14), 0px 1px 3px 0px rgba(0,0,0,0.12)' }}>
+              {/* Location or Homed Status */}
+              <div className={`rounded-[16px] p-[24px] mb-[24px] ${currentCat.status === 'Homed' ? (isDarkMode ? 'bg-[#0b2e23] border border-[#0f4f37]' : 'bg-[#ecf7ec]') : (isDarkMode ? 'bg-[rgba(78,205,196,0.06)]' : 'bg-[rgba(78,205,196,0.08)]')}`} style={{ boxShadow: isDarkMode ? '0px 2px 1px -1px rgba(0,0,0,0.4), 0px 1px 1px 0px rgba(0,0,0,0.28), 0px 1px 3px 0px rgba(0,0,0,0.24)' : '0px 2px 1px -1px rgba(0,0,0,0.2), 0px 1px 1px 0px rgba(0,0,0,0.14), 0px 1px 3px 0px rgba(0,0,0,0.12)' }}>
                 <div className="flex items-center gap-[16px]">
-                  <MapPin className="w-[32px] h-[32px] text-[#4ecdc4] flex-shrink-0" />
+                  {currentCat.status === 'Homed' ? (
+                    <Home className="w-[28px] h-[28px] text-[#4ecdc4] flex-shrink-0" />
+                  ) : (
+                    <MapPin className="w-[28px] h-[28px] text-[#4ecdc4] flex-shrink-0" />
+                  )}
                   <div>
-                    <div className={`font-['Nunito:SemiBold',sans-serif] font-semibold text-[14px] mb-[4px] ${isDarkMode ? 'text-[#7a9f93]' : 'text-[#636e72]'}`}>
-                      Location
+                    <div className={`font-['Nunito:SemiBold',sans-serif] font-semibold text-[14px] mb-[4px] ${currentCat.status === 'Homed' ? (isDarkMode ? 'text-[#b5d8c3]' : 'text-[#636e72]') : (isDarkMode ? 'text-[#7a9f93]' : 'text-[#636e72]')}`}>
+                      {currentCat.status === 'Homed' ? 'Homed' : 'Location'}
                     </div>
-                    <div className={`font-['Nunito:Medium',sans-serif] font-medium text-[16px] ${isDarkMode ? 'text-[#f4f7f9]' : 'text-[#2d3436]'}`}>
-                      {currentCat.location}
+                    <div className={`font-['Nunito:Medium',sans-serif] font-medium text-[16px] ${currentCat.status === 'Homed' ? (isDarkMode ? 'text-[#d6f0dc]' : 'text-[#2e7d32]') : (isDarkMode ? 'text-[#f4f7f9]' : 'text-[#2d3436]')}`}>
+                      {currentCat.status === 'Homed'
+                        ? 'Lives indoors with a loving family'
+                        : currentCat.location}
                     </div>
                   </div>
                 </div>
