@@ -4,6 +4,7 @@ import { CatsPage } from './pages/CatsPage';
 import { CatProfilePage } from './pages/CatProfilePage';
 import { DonatePage } from './pages/DonatePage';
 import { AdminPage } from './pages/AdminPage';
+import { AdminLoginPage } from './pages/AdminLoginPage';
 
 export const router = createBrowserRouter([
   {
@@ -24,6 +25,10 @@ export const router = createBrowserRouter([
   },
   {
     path: '/admin',
+    Component: AdminLoginPage,
+  },
+  {
+    path: '/admin/dashboard',
     Component: AdminPage,
   },
   {

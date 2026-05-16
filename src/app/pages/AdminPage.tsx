@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router';
 import { Header } from '../components/Header';
 import { useDarkMode } from '../context/DarkModeContext';
 import { Cat, cats as initialCats, homedCats as initialHomedCats } from '../data/cats';
@@ -25,7 +26,28 @@ export function AdminPage() {
   const [isUploadingVetBill, setIsUploadingVetBill] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
+  const navigate = useNavigate();
+  const [checkingAuth, setCheckingAuth] = useState(true);
+
   const clustersList = ['Cluster A', 'Cluster B', 'Cluster C', 'Cluster D', 'Cluster E', 'Cluster F', 'Cluster G', 'Cluster H', 'Cluster I', 'Cluster J', 'Cluster K', 'Cluster L', 'Cluster M', 'Cluster N', 'Cluster O', 'Cluster P', 'Cluster Q', 'Cluster R', 'Cluster S', 'Cluster T', 'Cluster U', 'Cluster V', 'Cluster W', 'Cluster X', 'Cluster Y', 'Cluster Z', 'Cluster Central Park'];
+
+  useEffect(() => {
+    const checkSession = async () => {
+      if (!supabase) {
+        navigate('/admin', { replace: true });
+        return;
+      }
+
+      const { data } = await supabase.auth.getSession();
+      if (!data?.session) {
+        navigate('/admin', { replace: true });
+      } else {
+        setCheckingAuth(false);
+      }
+    };
+
+    checkSession();
+  }, [navigate]);
 
   // Load from localStorage on mount
 useEffect(() => {
@@ -139,6 +161,12 @@ useEffect(() => {
         console.error('[v0] Exception saving cats to Supabase:', err);
       }
     }
+  };
+
+  const handleLogout = async () => {
+    if (!supabase) return;
+    await supabase.auth.signOut();
+    navigate('/admin', { replace: true });
   };
 
   const handleAddNew = () => {
@@ -365,6 +393,14 @@ useEffect(() => {
       return adoptionCompare;
     });
 
+  if (checkingAuth) {
+    return (
+      <div className={`min-h-screen flex items-center justify-center ${isDarkMode ? 'bg-[#10141a]' : 'bg-[#fff9f5]'}`}>
+        <div className="text-sm text-[#64748b]">Checking authentication…</div>
+      </div>
+    );
+  }
+
   return (
     <div className={`min-h-screen flex flex-col ${isDarkMode ? 'bg-[#10141a]' : 'bg-[#fff9f5]'}`}>
       <Header />
@@ -380,14 +416,23 @@ useEffect(() => {
               Manage all cats and their information
             </p>
           </div>
-          <button
-            onClick={handleAddNew}
-            className="bg-[#ff6b6b] hover:bg-[#ff5252] text-white rounded-[12px] sm:rounded-[16px] px-4 py-2 sm:px-6 sm:py-3 flex items-center gap-2 font-['Fredoka'] font-medium text-[14px] sm:text-[16px] transition-colors shadow-lg whitespace-nowrap"
-            style={{ fontVariationSettings: "'wdth' 100" }}
-          >
-            <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
-            Add New Cat
-          </button>
+          <div className="flex gap-3 flex-wrap">
+            <button
+              onClick={handleLogout}
+              className="bg-[#64748b] hover:bg-[#556d7b] text-white rounded-[12px] sm:rounded-[16px] px-4 py-2 sm:px-6 sm:py-3 font-['Fredoka'] font-medium text-[14px] sm:text-[16px] transition-colors shadow-lg whitespace-nowrap"
+              style={{ fontVariationSettings: "'wdth' 100" }}
+            >
+              Logout
+            </button>
+            <button
+              onClick={handleAddNew}
+              className="bg-[#ff6b6b] hover:bg-[#ff5252] text-white rounded-[12px] sm:rounded-[16px] px-4 py-2 sm:px-6 sm:py-3 flex items-center gap-2 font-['Fredoka'] font-medium text-[14px] sm:text-[16px] transition-colors shadow-lg whitespace-nowrap"
+              style={{ fontVariationSettings: "'wdth' 100" }}
+            >
+              <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+              Add New Cat
+            </button>
+          </div>
         </div>
 
         {/* Search and Sort Bar */}
