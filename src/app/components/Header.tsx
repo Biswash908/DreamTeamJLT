@@ -1,5 +1,7 @@
-import { Link, useLocation } from 'react-router';
+import { Link, useLocation, useNavigate } from 'react-router';
+import { useEffect, useState } from 'react';
 import { useDarkMode } from '../context/DarkModeContext';
+import { supabase } from '../lib/supabaseClient';
 import JltLogo from '../../imports/Cats/JLTLogo.png';
 import JltLogoWhite from '../../imports/Cats/JLTLogoWhite2.png';
 
@@ -17,10 +19,40 @@ function DreamTeamJltLogo({ isDarkMode }: { isDarkMode: boolean }) {
 
 export function Header() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { isDarkMode, toggleDarkMode } = useDarkMode();
+  const [isAdminSession, setIsAdminSession] = useState(false);
+  const isAdminRoute = location.pathname.startsWith('/admin');
   
   const isActive = (path: string) => location.pathname === path;
-  
+
+  useEffect(() => {
+    const client = supabase;
+    if (!client) return;
+
+    const checkSession = async () => {
+      const { data } = await client.auth.getSession();
+      setIsAdminSession(!!data?.session);
+    };
+
+    checkSession();
+
+    const { data: authListener } = client.auth.onAuthStateChange((_event, session) => {
+      setIsAdminSession(!!session);
+    });
+
+    return () => {
+      authListener?.subscription?.unsubscribe?.();
+    };
+  }, []);
+
+  const handleLogout = async () => {
+    if (!supabase) return;
+    await supabase.auth.signOut();
+    setIsAdminSession(false);
+    navigate('/admin', { replace: true });
+  };
+
   return (
     <div className={`${isDarkMode ? 'bg-[#161c23]' : 'bg-white'} content-stretch flex flex-col items-start pb-px shrink-0 sticky top-0 w-full z-[2]`} data-name="Header">
       <div aria-hidden="true" className={`absolute ${isDarkMode ? 'border-[rgba(244,247,249,0.12)] shadow-[0px_2px_12px_0px_rgba(0,0,0,0.35)]' : 'border-[rgba(45,52,54,0.12)] shadow-[0px_2px_12px_0px_rgba(0,0,0,0.06)]'} border-b border-solid inset-0 pointer-events-none`} />
@@ -53,13 +85,23 @@ export function Header() {
                   </div>
                 </div>
               </Link>
-              <Link to="/admin" className="no-underline">
-                <div className={`content-stretch flex items-center justify-center px-[24px] py-[10px] relative rounded-[24px] shrink-0 max-sm:px-[16px] transition-colors ${isActive('/admin') ? (isDarkMode ? 'bg-[rgba(78,205,196,0.2)]' : 'bg-[rgba(78,205,196,0.1)]') : (isDarkMode ? 'hover:bg-[rgba(255,255,255,0.05)]' : 'hover:bg-[rgba(0,0,0,0.05)]')}`} data-name="Component 3">
-                  <div className={`flex flex-col font-['Fredoka:Medium',sans-serif] font-medium justify-center leading-[0] relative shrink-0 text-[14px] text-center whitespace-nowrap ${isActive('/admin') ? 'text-[#4ecdc4]' : (isDarkMode ? 'text-[#b5c0c8]' : 'text-[#636e72]')}`} style={{ fontVariationSettings: "'wdth' 100" }}>
-                    <p className="leading-[24.5px]">Admin</p>
+              {isAdminRoute && isAdminSession ? (
+                <button
+                  onClick={handleLogout}
+                  className={`content-stretch flex items-center justify-center px-[24px] py-[10px] relative rounded-[24px] shrink-0 max-sm:px-[16px] transition-colors ${isDarkMode ? 'bg-[rgba(78,205,196,0.15)] hover:bg-[rgba(78,205,196,0.2)] text-[#4ecdc4]' : 'bg-[rgba(78,205,196,0.12)] hover:bg-[rgba(78,205,196,0.15)] text-[#4ecdc4]'}`}>
+                  <div className="flex flex-col font-['Fredoka:Medium',sans-serif] font-medium justify-center leading-[0] relative shrink-0 text-[14px] text-center whitespace-nowrap" style={{ fontVariationSettings: "'wdth' 100" }}>
+                    <p className="leading-[24.5px]">Logout</p>
                   </div>
-                </div>
-              </Link>
+                </button>
+              ) : (
+                <Link to="/admin" className="no-underline">
+                  <div className={`content-stretch flex items-center justify-center px-[24px] py-[10px] relative rounded-[24px] shrink-0 max-sm:px-[16px] transition-colors ${isActive('/admin') ? (isDarkMode ? 'bg-[rgba(78,205,196,0.2)]' : 'bg-[rgba(78,205,196,0.1)]') : (isDarkMode ? 'hover:bg-[rgba(255,255,255,0.05)]' : 'hover:bg-[rgba(0,0,0,0.05)]')}`} data-name="Component 3">
+                    <div className={`flex flex-col font-['Fredoka:Medium',sans-serif] font-medium justify-center leading-[0] relative shrink-0 text-[14px] text-center whitespace-nowrap ${isActive('/admin') ? 'text-[#4ecdc4]' : (isDarkMode ? 'text-[#b5c0c8]' : 'text-[#636e72]')}`} style={{ fontVariationSettings: "'wdth' 100" }}>
+                      <p className="leading-[24.5px]">Admin</p>
+                    </div>
+                  </div>
+                </Link>
+              )}
               <button
                 onClick={toggleDarkMode}
                 className={`content-stretch flex flex-col items-start pl-[4px] relative shrink-0 bg-transparent border-none cursor-pointer ${isDarkMode ? 'hover:bg-[rgba(255,255,255,0.05)]' : 'hover:bg-[rgba(0,0,0,0.05)]'} rounded-[20px] transition-colors`}

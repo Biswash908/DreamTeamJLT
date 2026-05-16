@@ -25,6 +25,8 @@ export function AdminPage() {
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [isUploadingVetBill, setIsUploadingVetBill] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const navigate = useNavigate();
   const [checkingAuth, setCheckingAuth] = useState(true);
@@ -48,6 +50,10 @@ export function AdminPage() {
 
     checkSession();
   }, [navigate]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, sortByGender, sortByTNR, sortByStatus, sortByAdoption, sortByCluster, allCats.length]);
 
   // Load from localStorage on mount
 useEffect(() => {
@@ -189,6 +195,7 @@ useEffect(() => {
       image: '',
       description: '',
       location: '',
+      spottedDate: new Date().toISOString(),
       vetBills: [],
       freeForAdoption: false,
       adoptionClusters: [],
@@ -239,6 +246,7 @@ useEffect(() => {
 
   const handleImageUpload = async (file: File) => {
     if (!file) return;
+    if (!supabase) return;
 
     try {
       setIsUploadingImage(true);
@@ -282,6 +290,8 @@ useEffect(() => {
   };
 
   const fetchExistingBills = async (catId: string) => {
+    if (!supabase) return [];
+
     try {
       const { data, error } = await supabase
         .from('bills')
@@ -309,6 +319,7 @@ useEffect(() => {
 
   const handleVetBillFileUpload = async (file: File, billIndex: number) => {
     if (!file || !editingCat) return;
+    if (!supabase) return;
 
     try {
       console.log(`[v0] Starting vet bill file upload for bill #${billIndex}:`, file.name);
@@ -364,34 +375,27 @@ useEffect(() => {
       (sortByCluster === 'All' || (sortByCluster === 'No cluster'
         ? (!cat.adoptionClusters || cat.adoptionClusters.length === 0) && cat.status !== 'Homed'
         : (cat.adoptionClusters && cat.adoptionClusters.includes(sortByCluster))))
-    )
-    .sort((a, b) => {
-      // Primary sort: by first cluster
-      const clusterA = (a.adoptionClusters && a.adoptionClusters.length > 0) ? a.adoptionClusters[0] : 'z-unknown'; // Sort unknowns to end
-      const clusterB = (b.adoptionClusters && b.adoptionClusters.length > 0) ? b.adoptionClusters[0] : 'z-unknown';
-      const clusterCompare = clusterA.localeCompare(clusterB);
-      
-      if (clusterCompare !== 0) return clusterCompare;
-      
-      // Secondary sorts within same cluster
-      // Sort by gender (Female first, then Male)
-      const genderOrder = { 'Female': 0, 'Male': 1 };
-      const genderCompare = (genderOrder[a.gender as keyof typeof genderOrder] || 2) - (genderOrder[b.gender as keyof typeof genderOrder] || 2);
-      if (genderCompare !== 0) return genderCompare;
-      
-      // Sort by TNR status (TNR'd first)
-      const tnrCompare = (b.tnr ? 1 : 0) - (a.tnr ? 1 : 0);
-      if (tnrCompare !== 0) return tnrCompare;
-      
-      // Sort by status (Stray first, then Homed)
-      const statusOrder = { 'Stray': 0, 'Homed': 1 };
-      const statusCompare = (statusOrder[a.status as keyof typeof statusOrder] || 2) - (statusOrder[b.status as keyof typeof statusOrder] || 2);
-      if (statusCompare !== 0) return statusCompare;
-      
-      // Sort by free for adoption (Yes first)
-      const adoptionCompare = (b.freeForAdoption ? 1 : 0) - (a.freeForAdoption ? 1 : 0);
-      return adoptionCompare;
-    });
+    );
+
+  const sortedCats = [...filteredCats].sort((a, b) => {
+    const getTime = (cat: Cat) => {
+      const value = cat.updatedAt || cat.spottedDate || '';
+      const timestamp = Date.parse(value);
+      return Number.isNaN(timestamp) ? 0 : timestamp;
+    };
+
+    return getTime(b) - getTime(a);
+  });
+
+  const pageCount = Math.max(1, Math.ceil(sortedCats.length / itemsPerPage));
+
+  useEffect(() => {
+    if (currentPage > pageCount) {
+      setCurrentPage(pageCount);
+    }
+  }, [currentPage, pageCount]);
+
+  const displayedCats = sortedCats.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   if (checkingAuth) {
     return (
@@ -417,13 +421,6 @@ useEffect(() => {
             </p>
           </div>
           <div className="flex gap-3 flex-wrap">
-            <button
-              onClick={handleLogout}
-              className="bg-[#64748b] hover:bg-[#556d7b] text-white rounded-[12px] sm:rounded-[16px] px-4 py-2 sm:px-6 sm:py-3 font-['Fredoka'] font-medium text-[14px] sm:text-[16px] transition-colors shadow-lg whitespace-nowrap"
-              style={{ fontVariationSettings: "'wdth' 100" }}
-            >
-              Logout
-            </button>
             <button
               onClick={handleAddNew}
               className="bg-[#ff6b6b] hover:bg-[#ff5252] text-white rounded-[12px] sm:rounded-[16px] px-4 py-2 sm:px-6 sm:py-3 flex items-center gap-2 font-['Fredoka'] font-medium text-[14px] sm:text-[16px] transition-colors shadow-lg whitespace-nowrap"
@@ -986,7 +983,7 @@ useEffect(() => {
                 </tr>
               </thead>
               <tbody>
-                {filteredCats.map((cat, index) => (
+                {displayedCats.map((cat, index) => (
                   <tr
                     key={cat.id}
                     className={`border-t ${isDarkMode ? 'border-[rgba(255,255,255,0.1)] hover:bg-[rgba(255,255,255,0.03)]' : 'border-[rgba(0,0,0,0.1)] hover:bg-[rgba(0,0,0,0.02)]'} transition-colors`}
@@ -1082,11 +1079,38 @@ useEffect(() => {
             </table>
           </div>
 
-          {filteredCats.length === 0 && (
+          {displayedCats.length === 0 && (
             <div className="text-center py-12">
               <p className={`font-['Nunito'] text-[16px] ${isDarkMode ? 'text-[#b5c0c8]' : 'text-[#636e72]'}`}>
                 No cats found. {searchQuery ? 'Try a different search.' : 'Add your first cat!'}
               </p>
+            </div>
+          )}
+
+          {pageCount > 1 && (
+            <div className={`flex flex-col gap-3 sm:flex-row items-center justify-between px-6 py-4 border-t ${isDarkMode ? 'border-[rgba(255,255,255,0.1)]' : 'border-[rgba(0,0,0,0.1)]'}`}>
+              <div className={`font-['Nunito'] text-[14px] ${isDarkMode ? 'text-[#b5c0c8]' : 'text-[#636e72]'}`}>
+                Showing {(currentPage - 1) * itemsPerPage + 1} – {Math.min(currentPage * itemsPerPage, sortedCats.length)} of {sortedCats.length} cats
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                  className={`rounded-[12px] px-4 py-2 text-sm font-semibold transition ${currentPage === 1 ? 'bg-gray-200 text-gray-500 cursor-not-allowed' : 'bg-[#4ecdc4] text-white hover:bg-[#3db8b0]'}`}
+                >
+                  Previous
+                </button>
+                <span className={`text-[14px] ${isDarkMode ? 'text-[#b5c0c8]' : 'text-[#636e72]'}`}>
+                  Page {currentPage} of {pageCount}
+                </span>
+                <button
+                  onClick={() => setCurrentPage((prev) => Math.min(prev + 1, pageCount))}
+                  disabled={currentPage === pageCount}
+                  className={`rounded-[12px] px-4 py-2 text-sm font-semibold transition ${currentPage === pageCount ? 'bg-gray-200 text-gray-500 cursor-not-allowed' : 'bg-[#4ecdc4] text-white hover:bg-[#3db8b0]'}`}
+                >
+                  Next
+                </button>
+              </div>
             </div>
           )}
         </div>

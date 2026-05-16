@@ -11,6 +11,7 @@ export interface Cat {
   description: string;
   location: string;
   spottedDate: string;
+  updatedAt?: string;
   vetBills?: {
     description: string;
     amount: string;
@@ -42,19 +43,20 @@ export async function fetchCats(): Promise<Cat[]> {
 
     // Transform database format to match UI format
     return (data || []).map((cat: any) => ({
-  id: cat.id,
-  name: cat.name,
-  breed: cat.breed,
-  gender: cat.gender,
-  status: cat.status,
-  tnr: cat.tnr,
-  image: cat.image,
-  description: cat.description,
-  location: cat.location,
-  spottedDate: cat.spotted_date,
-  freeForAdoption: cat.free_for_adoption,
+      id: cat.id,
+      name: cat.name,
+      breed: cat.breed,
+      gender: cat.gender,
+      status: cat.status,
+      tnr: cat.tnr,
+      image: cat.image,
+      description: cat.description,
+      location: cat.location,
+      spottedDate: cat.spotted_date,
+      updatedAt: cat.updated_at || cat.spotted_date,
+      freeForAdoption: cat.free_for_adoption,
       adoptionClusters: cat.adoption_clusters || [],
-  adoptionEmail: cat.adoption_email,
+      adoptionEmail: cat.adoption_email,
     }));
   } catch (err) {
     console.error('Exception fetching cats:', err);

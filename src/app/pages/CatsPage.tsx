@@ -205,7 +205,7 @@ export function CatsPage() {
     });
 
     return matchesSearch && matchesTNR && matchesAdoptable && matchesGender && matchesCluster;
-  });
+  }).sort((a, b) => a.name.localeCompare(b.name));
 
   const strayCats = filteredCats.filter(c => c.status === 'Stray');
   const homed = filteredCats.filter(c => c.status === 'Homed');

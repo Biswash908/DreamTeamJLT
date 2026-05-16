@@ -142,16 +142,16 @@ export function HomePage() {
       </div>
 
       {/* CTA Section - Full Width */}
-      <div className={`w-full ${isDarkMode ? 'bg-[#2d3436]' : 'bg-[#ff6b6b]'} py-16 px-6`}>
+      <div className={`w-full py-16 px-6 ${isDarkMode ? 'bg-gradient-to-r from-[#0c1220] via-[#261a2c] to-[#43212f]' : 'bg-gradient-to-r from-[#46202f] via-[#7f3246] to-[#264550]'}`}>
         <div className="max-w-[1200px] mx-auto text-center">
-          <h2 className={`font-['Fredoka'] font-bold text-[24px] sm:text-[30px] md:text-[36px] mb-4 ${isDarkMode ? 'text-white' : 'text-[#2d3436]'}`} style={{ fontVariationSettings: "'wdth' 100" }}>
+          <h2 className={`font-['Fredoka'] font-bold text-[24px] sm:text-[30px] md:text-[36px] mb-4 text-white`} style={{ fontVariationSettings: "'wdth' 100" }}>
             Ready to Meet Your New Best Friend?
           </h2>
-          <p className={`font-['Nunito'] text-[14px] sm:text-[16px] md:text-[18px] mb-8 ${isDarkMode ? 'text-[#b5c0c8]' : 'text-[#2d3436]'} opacity-90`}>
+          <p className="font-['Nunito'] text-[14px] sm:text-[16px] md:text-[18px] mb-8 text-[#d8d8d8] opacity-90">
             Browse our cat profiles and find your perfect companion.
           </p>
           <Link to="/cats" className="no-underline inline-block">
-            <div className={`${isDarkMode ? 'bg-[#ff6b6b] text-white' : 'bg-white text-[#ff6b6b]'} rounded-[20px] sm:rounded-[24px] px-8 sm:px-12 py-3 sm:py-4 font-['Fredoka'] font-medium text-[14px] sm:text-[16px] md:text-[20px] hover:scale-110 transition-transform duration-300 shadow-lg cursor-pointer`} style={{ fontVariationSettings: "'wdth' 100" }}>
+            <div className="rounded-[20px] sm:rounded-[24px] px-8 sm:px-12 py-3 sm:py-4 font-['Fredoka'] font-medium text-[14px] sm:text-[16px] md:text-[20px] bg-[#ff6b6b] text-[#140e0f] hover:scale-110 transition-transform duration-300 shadow-[0_20px_60px_rgba(255,107,107,0.28)] cursor-pointer" style={{ fontVariationSettings: "'wdth' 100" }}>
               Meet Adoptable Cats
             </div>
           </Link>
